@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(50)
+  username  String   @unique @db.VarChar(25)
+  password  String
+  balance   Float    @default(3000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  notifications Notification[]
+  trades        Trade[]
+  orders        Order[]
+  positions     Position[]
+
+  // Settings
+  isKycVerified Boolean @default(false)
+  isAdmin       Boolean @default(false)
+
+  @@map("users")
+}
+
+model Trade {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  orderId   Int
+  symbol    String
+  side      OrderSide
+  quantity  Float
+  price     Float
+  total     Float
+  fee       Float     @default(0)
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("trades")
+}
+
+model Order {
+  id             Int         @id @default(autoincrement())
+  userId         Int
+  symbol         String
+  type           OrderType
+  side           OrderSide
+  quantity       Float
+  price          Float?
+  stopPrice      Float?
+  status         OrderStatus @default(OPEN)
+  filledQuantity Float       @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  executedAt     DateTime?
+  expiresAt      DateTime?
+
+  // Relations
+  marketData MarketData @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades     Trade[]
+
+  @@map("orders")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model MarketData {
+  id            String   @id
+  symbol        String   @unique
+  imageUrl      String?  @db.VarChar(1000)
+  name          String?
+  price         Float
+  change        Float
+  changePercent Float
+  high          Float
+  low           Float
+  volume        Float
+  marketCap     Float?
+  updatedAt     DateTime @default(now())
+  orders        Order[]
+
+  @@map("market_data")
+}
+
+// Asset
+model Position {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  symbol          String
+  quantity        Float
+  averageBuyPrice Float
+  currentPrice    Float    @default(0)
+  currentValue    Float    @default(0)
+  unrealizedPnL   Float    @default(0)
+  realizedPnL     Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@map("positions")
+}
+
+enum OrderType {
+  MARKET // Sell imidiately at market price
+  LIMIT // Buy/Sell at a specific price
+  STOP // Buy/Sell when price reaches a specific price
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  OPEN
+  FILLED
+  PARTIALLY_FILLED
+  CANCELLED
+  EXPIRED
+}
