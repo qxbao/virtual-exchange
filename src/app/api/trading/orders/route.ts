@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
               ? marketData.price * quantity 
               : (price || stopPrice)! * quantity;
     
-            if (!user || user.balance < marketData.price * quantity) {
+            if (!user || user.balance < estimatedCost) {
                 return NextResponse.json({ message: 'Insufficient balance' }, { status: 400 });
             }
         }
