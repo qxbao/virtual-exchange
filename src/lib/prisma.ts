@@ -105,15 +105,7 @@ async function handleOrderChanges(operation: string, data: Order, orderPrevStat:
   async function handleMarketDataChanges(operation: string, data: MarketData) {
     if (!data || !data.symbol) return;
     
-    const marketUpdate = {
-      symbol: data.symbol,
-      price: data.price,
-      change: data.change,
-      changePercent: data.changePercent,
-      updatedAt: data.updatedAt
-    };
-    
-    await emitMarketUpdate(data.symbol, marketUpdate);
+    await emitMarketUpdate(data.symbol, data);
   }
   
   async function handleUserBalanceChanges(data: User) {

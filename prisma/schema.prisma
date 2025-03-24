@@ -88,8 +88,10 @@ model Notification {
 }
 
 model MarketData {
-  id            String   @id
+  id            String   @id @default(uuid())
   symbol        String   @unique
+  baseAsset     String
+  quoteAsset    String
   imageUrl      String?  @db.VarChar(1000)
   name          String?
   price         Float

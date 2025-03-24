@@ -18,33 +18,45 @@ export async function POST(request: Request) {
             { status: 500 }
         );
     }
-    const u = await prisma.user.findFirst({
-        where: {
-            OR: [{ username }, { email }],
-        },
-    });
-    if (u) {
-        for (const key of ["username", "email"]) {
-            if (u[key as keyof typeof u] == body[key]) {
-                return NextResponse.json(
-                    {
-                        error: "User Already Exists",
-                        message: `The ${key} is already taken.`,
-                    },
-                    { status: 500 }
-                );
+    try {
+
+        const u = await prisma.user.findFirst({
+            where: {
+                OR: [{ username }, { email }],
+            },
+        });
+        if (u) {
+            for (const key of ["username", "email"]) {
+                if (u[key as keyof typeof u] == body[key]) {
+                    return NextResponse.json(
+                        {
+                            error: "User Already Exists",
+                            message: `The ${key} is already taken.`,
+                        },
+                        { status: 500 }
+                    );
+                }
             }
         }
+    
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await prisma.user.create({
+            data: {
+                username,
+                email,
+                password: hashedPassword,
+            },
+        });
+    } catch (e) {
+        console.error("Error creating user:", e);
+        return NextResponse.json(
+            {
+                error: "Failed to create user",
+                message: "An error occurred while creating the user.",
+            },
+            { status: 500 }
+        );
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.user.create({
-        data: {
-            username,
-            email,
-            password: hashedPassword,
-        },
-    });
     return NextResponse.json({
         message: "User created successfully.",
     });

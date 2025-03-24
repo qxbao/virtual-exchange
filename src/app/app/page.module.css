@@ -1,0 +1,5 @@
+.coinCard:hover {
+    background: #1b1b1b;
+    transition: .5s all;
+    border-radius:10px; 
+}

@@ -1,5 +1,5 @@
+'use client';
 import { useSocket } from "@/contexts/SocketContext";
-import { getMarketData } from "@/lib/market";
 import { MarketData } from "@prisma/client";
 import { useState, useEffect } from "react";
 
@@ -7,7 +7,13 @@ export default function useMarketData(symbol: string) {
     const [price, setPrice] = useState<number | null>(null);
     const [change, setChange] = useState<number>(0);
     const [changePercent, setChangePercent] = useState<number>(0);
+    const [marketCap, setMarketCap] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [volume, setVolume] = useState<number>(0);
+    const [asset, setAsset] = useState({
+        baseAsset: "",
+        quoteAsset: "",
+    });
     const { socket, subscribeToMarket, unsubscribeFromMarket } = useSocket();
 
     useEffect(() => {
@@ -15,8 +21,15 @@ export default function useMarketData(symbol: string) {
 
         const fetchInitialData = async () => {
             try {
-                const marketData = await getMarketData(symbol);
+                const marketData:MarketData = await fetch("/api/market/data?symbol=" + symbol).then((res) => res.json());
                 setPrice(marketData.price);
+                setChangePercent(marketData.changePercent);
+                setChange(marketData.change);
+                setAsset({
+                    baseAsset: marketData.baseAsset,
+                    quoteAsset: marketData.quoteAsset,
+                });
+                setVolume(marketData.volume);
             } catch (error) {
                 console.error("Error fetching market data:", error);
             } finally {
@@ -32,8 +45,9 @@ export default function useMarketData(symbol: string) {
             const handlePriceUpdate = (data: MarketData) => {
                 if (data.symbol === symbol) {
                     setPrice(data.price);
-                    setChange(data.change);
+                    setChange(data.change); 
                     setChangePercent(data.changePercent);
+                    setMarketCap(data.marketCap!);
                 }
             };
 
@@ -46,5 +60,5 @@ export default function useMarketData(symbol: string) {
         }
     }, [symbol, socket, subscribeToMarket, unsubscribeFromMarket]);
 
-    return { price, change, changePercent, isLoading };
+    return { asset, price, change, changePercent, isLoading, marketCap, volume };
 }
