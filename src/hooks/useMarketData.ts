@@ -7,9 +7,11 @@ export default function useMarketData(symbol: string) {
     const [price, setPrice] = useState<number | null>(null);
     const [change, setChange] = useState<number>(0);
     const [changePercent, setChangePercent] = useState<number>(0);
-    const [marketCap, setMarketCap] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [name, setName] = useState<string>("");
+    const [marketCap, setMarketCap] = useState<number>(0);
     const [volume, setVolume] = useState<number>(0);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [asset, setAsset] = useState({
         baseAsset: "",
         quoteAsset: "",
@@ -30,6 +32,8 @@ export default function useMarketData(symbol: string) {
                     quoteAsset: marketData.quoteAsset,
                 });
                 setVolume(marketData.volume);
+                setName(marketData.name as string);
+                setImageUrl(marketData.imageUrl as string);
             } catch (error) {
                 console.error("Error fetching market data:", error);
             } finally {
@@ -46,6 +50,7 @@ export default function useMarketData(symbol: string) {
                 if (data.symbol === symbol) {
                     setPrice(data.price);
                     setChange(data.change); 
+                    setVolume(data.volume);
                     setChangePercent(data.changePercent);
                     setMarketCap(data.marketCap!);
                 }
@@ -60,5 +65,5 @@ export default function useMarketData(symbol: string) {
         }
     }, [symbol, socket, subscribeToMarket, unsubscribeFromMarket]);
 
-    return { asset, price, change, changePercent, isLoading, marketCap, volume };
+    return { asset, price, change, changePercent, isLoading, marketCap, volume, name, imageUrl };
 }

@@ -2,10 +2,9 @@
 import { MarketData } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import Image from "next/image";
 import useMarketData from "@/hooks/useMarketData";
 import style from "./page.module.css";
-import { IoLogoUsd } from "react-icons/io5";
+import Image from "next/image";
 
 export default function AuthenticatedHome() {
     const [marketData, setMarketData] = useState<MarketData[]>([]);
@@ -22,7 +21,7 @@ export default function AuthenticatedHome() {
     return (
         <Container className="py-5">
             <div className="px-lg-2 mb-5">
-                <div className="h1 fw-bold">Markets Overview</div>
+                <div className="h1 fw-bold">Spot Markets</div>
                 <p>Click on any crypto to start trading</p>
             </div>
             <Row className="text-secondary small fw-bold px-lg-2">
@@ -51,12 +50,12 @@ export default function AuthenticatedHome() {
                     })
                 }
             </div>
-            </Container>
+        </Container>
     );
 }
 
 const CoinDisplayCard = ({ data }: { data: MarketData }) => {
-    const { price, changePercent, isLoading, marketCap, asset, volume } = useMarketData(data.symbol);
+    const { price, changePercent, isLoading, asset, volume, name, imageUrl, marketCap } = useMarketData(data.symbol);
     const bigNumberFormat = (num: number) => {
         if (num > 1_000_000_000) {
             return (num / 1_000_000_000).toFixed(2) + "B";
@@ -71,11 +70,17 @@ const CoinDisplayCard = ({ data }: { data: MarketData }) => {
         <Row className={"py-4 px-lg-2 " + style.coinCard} role="button">
             <Col lg={4}>
                 <div className="d-flex align-items-center">
-                    <IoLogoUsd size={24} />
+                    {imageUrl && <Image
+                        src={imageUrl!}
+                        className="me-2"
+                        alt="coin logo"
+                        width={24}
+                        height={24}
+                    />}
                     <span className="fw-semibold me-1">
                         {asset.baseAsset + "/" + asset.quoteAsset}
                     </span>
-                    <span className="small text-secondary">Safe</span>
+                    <span className="small text-secondary">{name}</span>
                 </div>
             </Col>
             <Col lg={2}>
@@ -96,14 +101,12 @@ const CoinDisplayCard = ({ data }: { data: MarketData }) => {
             </Col>
             <Col lg={2}>
                 <div className="text-end fw-light">
-                    <span className="me-1">$</span>
-                    {bigNumberFormat(volume)}
+                    ${bigNumberFormat(volume)}
                 </div>
             </Col>
             <Col lg={2}>
                 <div className="text-end fw-light">
-                    <span className="me-1">$</span>
-                    {marketCap}
+                    ${bigNumberFormat(marketCap)}
                 </div>
             </Col>
         </Row>

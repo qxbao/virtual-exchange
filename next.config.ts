@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
         remotePatterns: [
             {
                 protocol: "https",
-                hostname: "coin-images.coingecko.com",
+                hostname: "bin.bnbstatic.com",
                 port: '',
 
             }

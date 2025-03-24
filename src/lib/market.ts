@@ -61,8 +61,7 @@ export async function getMarketData(symbol: string): Promise<MarketData> {
     }
 }
 
-export async function initMarketData() {
-    const assets = DefaultBaseAssets.map((asset) => `${asset}USDT`);
+export async function updateMarketData(assets: string[] = DefaultBaseAssets) {
     const symbols = JSON.stringify(assets);
     const response = await fetch(
         "https://api.binance.com/api/v3/ticker/24hr?" +
@@ -136,4 +135,78 @@ async function fetchMarketData(symbol: string) {
         },
     });
     return result;
+}
+
+async function fetchAllMarketData(symbol: string) {
+    const response = await fetch(
+        "https://api.binance.com/api/v3/ticker/24hr?" +
+            new URLSearchParams({
+                symbol,
+            }),
+        {
+            headers: { accept: "application/json" },
+        }
+    );
+    const marketData: Binance24HFullResponse = await response.json();
+    const result = await prisma.marketData.upsert({
+        where: { symbol },
+        update: {
+            price: Number(marketData.lastPrice),
+            change: Number(marketData.priceChange),
+            changePercent: Number(marketData.priceChangePercent),
+            high: Number(marketData.highPrice),
+            low: Number(marketData.lowPrice),
+            volume: Number(marketData.volume),
+            updatedAt: new Date(),
+        },
+        create: {
+            baseAsset: symbol.split("USDT")[0],
+            quoteAsset: "USDT",
+            symbol: marketData.symbol,
+            price: Number(marketData.lastPrice),
+            change: Number(marketData.priceChange),
+            changePercent: Number(marketData.priceChangePercent),
+            high: Number(marketData.highPrice),
+            low: Number(marketData.lowPrice),
+            volume: Number(marketData.volume),
+        },
+    });
+    return result;
+}
+
+export async function updateSpecialFieldsMarketData(){
+        const marketData = await prisma.marketData.findMany({
+            select: {
+                symbol: true,
+            },
+            where: {
+                OR: [
+                    {name: null},
+                    {marketCap: null},
+                    {imageUrl: null},
+                ]
+            }
+        });
+        if (marketData.length === 0) return;
+        const symbolSet = new Set(marketData.map((data) => data.symbol));
+        console.log(symbolSet);
+        // Binance's non-public API, might be unstable
+        const externalResponse = await fetch(
+            "https://www.binance.com/bapi/apex/v1/friendly/apex/marketing/complianceSymbolList"
+        );
+        const externalData = (await externalResponse.json()).data;
+        for (const data of externalData) {
+            if (symbolSet.has(data.symbol)) {
+                await prisma.marketData.update({
+                    where: { symbol: data.symbol },
+                    data: {
+                        name: data.fullName,
+                        marketCap: data.marketCap,
+                        imageUrl: data.logo,
+                    },
+                });
+                symbolSet.delete(data.symbol);
+                if (symbolSet.size === 0) return;
+            }
+        }
 }
