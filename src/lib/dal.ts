@@ -4,10 +4,11 @@ import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/session'
 import { cache } from 'react'
 import prisma from './prisma'
+import { SessionPayload } from '@/d.type'
  
-export const verifySession = cache(async () => {
+export const verifySession:() => Promise<SessionPayload | null> = cache(async () => {
   const cookie = (await cookies()).get('session')?.value
-  const session = await decrypt(cookie)
+  const session:SessionPayload|null = await decrypt(cookie)
   
   if (!session?.id) {
     return null;

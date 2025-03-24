@@ -14,14 +14,15 @@ export async function encrypt(payload: SessionPayload) {
         .sign(encodedKey);
 }
 
-export async function decrypt(session: string | undefined = "") {
+export async function decrypt(session: string | undefined = ""):Promise<SessionPayload | null> {
     try {
-        const { payload } = await jwtVerify(session, encodedKey, {
+        const { payload } : { payload:SessionPayload } = await jwtVerify(session, encodedKey, {
             algorithms: ["HS256"],
         });
         return payload;
     } catch (_) {
         console.error("Failed to verify session");
+        return null;
     }
 }
 

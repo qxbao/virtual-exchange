@@ -1,6 +1,6 @@
 import { FormEvent, useRef, useState } from "react";
 import { Form, Row, Col } from "react-bootstrap";
-import { validateSigninFormData } from "@/services/validate";
+import { validateSigninFormData } from "@/lib/validate";
 import { SigninFormData } from "@/d.type";
 
 interface SigninFormProps {

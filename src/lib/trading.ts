@@ -1,6 +1,7 @@
 import { OrderSide, OrderStatus } from "@prisma/client";
 import prisma from "./prisma";
 import { getMarketData } from "./market";
+import { emitToUser } from "./socket";
 
 export async function executeOrder(orderId: number) {
     try {
@@ -24,7 +25,7 @@ export async function executeOrder(orderId: number) {
         const totalValue = order.quantity * executionPrice;
         const fee = totalValue * 0.001;
         
-        return await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx) => {
             const trade = await tx.trade.create({
                 data: {
                     userId: order.userId,
@@ -38,7 +39,7 @@ export async function executeOrder(orderId: number) {
                 },
             });
 
-            await tx.order.update({
+            const updatedOrder = await tx.order.update({
                 where: {
                     id: order.id
                 },
@@ -164,10 +165,37 @@ export async function executeOrder(orderId: number) {
                     message: `Your ${order.side} order for ${order.quantity} ${order.symbol} has been filled at ${executionPrice.toFixed(2)}.`
                 }
             });
-
-            return trade;
+            return {updatedOrder, trade};
         });
 
+        const { updatedOrder, trade } = result;
+        await emitToUser(updatedOrder.userId, 'order-updated', updatedOrder);
+        await emitToUser(updatedOrder.userId, 'trade-executed', trade);
+        const position = await prisma.position.findUnique({
+            where: {
+              userId_symbol: {
+                userId: updatedOrder.userId,
+                symbol: updatedOrder.symbol
+              }
+            }
+        });
+
+        if (position) {
+            await emitToUser(updatedOrder.userId, 'position-update', position);
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: updatedOrder.userId },
+            select: { id: true, balance: true }
+        });
+        
+        if (user) {
+            await emitToUser(user.id, 'balance-update', {
+            userId: user.id,
+            balance: user.balance
+            });
+        }
+        return trade;
     } catch (error) {
         console.error('Error executing order:', error);
         throw error;

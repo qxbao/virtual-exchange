@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { validateSignupFormData } from "@/services/validate";
+import { validateSignupFormData } from "@/lib/validate";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {

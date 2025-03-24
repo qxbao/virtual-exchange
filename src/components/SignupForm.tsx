@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Form, Row, Col } from "react-bootstrap";
-import { validateSignupFormData } from "@/services/validate";
+import { validateSignupFormData } from "@/lib/validate";
 import { SignupFormData } from "@/d.type";
 
 interface SignupFormProps {
