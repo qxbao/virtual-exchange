@@ -5,6 +5,8 @@ import { Col, Container, Row } from "react-bootstrap";
 import useMarketData from "@/hooks/useMarketData";
 import style from "./page.module.css";
 import Image from "next/image";
+import Link from "next/link";
+import { bigNumberFormat } from "@/utils/number";
 
 export default function AuthenticatedHome() {
     const [marketData, setMarketData] = useState<MarketData[]>([]);
@@ -56,59 +58,52 @@ export default function AuthenticatedHome() {
 
 const CoinDisplayCard = ({ data }: { data: MarketData }) => {
     const { price, changePercent, isLoading, asset, volume, name, imageUrl, marketCap } = useMarketData(data.symbol);
-    const bigNumberFormat = (num: number) => {
-        if (num > 1_000_000_000) {
-            return (num / 1_000_000_000).toFixed(2) + "B";
-        } else if (num > 1_000_000) {
-            return (num / 1_000_000).toFixed(2) + "M";
-        } else if (num > 1_000) {
-            return (num / 1_000).toFixed(2) + "K";
-        }
-        return num;
-    }
     return (
-        <Row className={"py-4 px-lg-2 " + style.coinCard} role="button">
-            <Col lg={4}>
-                <div className="d-flex align-items-center">
-                    {imageUrl && <Image
-                        src={imageUrl!}
-                        className="me-2"
-                        alt="coin logo"
-                        width={24}
-                        height={24}
-                    />}
-                    <span className="fw-semibold me-1">
-                        {asset.baseAsset + "/" + asset.quoteAsset}
-                    </span>
-                    <span className="small text-secondary">{name}</span>
-                </div>
-            </Col>
-            <Col lg={2}>
-                <div className="text-end fw-light">
-                    {!isLoading && price}
-                </div>
-            </Col>
-            <Col lg={2}>
-                <div className="text-end fw-bold">
-                    {
-                        !isLoading && (
-                            <span className={changePercent > 0 ? "text-success" : "text-danger"}>
-                                {(changePercent > 0 ? "+" : "") + changePercent.toFixed(2)}%
-                            </span>
-                        )
-                    }
-                </div>
-            </Col>
-            <Col lg={2}>
-                <div className="text-end fw-light">
-                    ${bigNumberFormat(volume)}
-                </div>
-            </Col>
-            <Col lg={2}>
-                <div className="text-end fw-light">
-                    ${bigNumberFormat(marketCap)}
-                </div>
-            </Col>
-        </Row>
+        <Link href="/app/trade/[symbol]" as={`/app/trade/${data.symbol}`}>
+            <Row className={"py-4 px-lg-2 " + style.coinCard} role="button">
+                <Col lg={4}>
+                    <div className="d-flex align-items-center">
+                        {imageUrl && <Image
+                            src={imageUrl!}
+                            className="me-2"
+                            alt="coin logo"
+                            width={24}
+                            height={24}
+                        />}
+                        <span className="me-1">
+                            <span className="fw-semibold">{asset.baseAsset}</span>
+                            {"/" + asset.quoteAsset}
+                        </span>
+                        <span className="smaller text-secondary">{name}</span>
+                    </div>
+                </Col>
+                <Col lg={2}>
+                    <div className="text-end fw-light">
+                        {!isLoading && price!.toLocaleString("en-us", { maximumFractionDigits: 8 })}
+                    </div>
+                </Col>
+                <Col lg={2}>
+                    <div className="text-end fw-bold">
+                        {
+                            !isLoading && (
+                                <span className={changePercent > 0 ? "text-success" : "text-danger"}>
+                                    {(changePercent > 0 ? "+" : "") + changePercent.toFixed(2)}%
+                                </span>
+                            )
+                        }
+                    </div>
+                </Col>
+                <Col lg={2}>
+                    <div className="text-end fw-light">
+                        ${bigNumberFormat(volume)}
+                    </div>
+                </Col>
+                <Col lg={2}>
+                    <div className="text-end fw-light">
+                        ${bigNumberFormat(marketCap)}
+                    </div>
+                </Col>
+            </Row>
+        </Link>
     );
 }

@@ -1,3 +1,21 @@
-.navItem {
-    color: rgb(91, 84, 84) !important;
+.dropdownItem {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    visibility: hidden;
+    opacity: 0.4;
+    min-width: 17rem;
+    transition: visibility 0s, opacity 0.5s linear, all .3s ease-in-out;
+}
+
+.dropdownItem.show {
+    visibility: visible;
+    opacity: 1;
+    background: transparent;
+    padding-top: .8rem;
+}
+
+.dropdownContent {
+    background: white !important;
+    color: black;
 }

@@ -1,3 +1,9 @@
-$primary: #1b68b0;
-$secondary: #8c8c8c;
-@use "../../../node_modules/bootstrap/scss/bootstrap";
+$primary: #5e51ef;
+$secondary: #a4a3a3;
+$success: #25A750;
+
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+
+.smaller {
+    font-size: 0.75rem !important;
+}
