@@ -25,9 +25,9 @@ const getPositions = async (userId: number, symbols: string[]) => {
     const positions = await prisma.position.findMany({
         where: {
             userId,
-            symbol: {
+            symbol: symbols.length ? {
                 in: symbols
-            }
+            } : {}
         }
     });
     return positions;
@@ -37,6 +37,9 @@ const fetchPositions = async (positions: Position[]) => {
     await Promise.all(positions.map(async (position) => {
         try {
             const data = await getMarketData(position.symbol);
+            if (!data) {
+                throw new Error(`Market data not found for ${position.symbol}`);
+            }
             const currentPrice = data.price;
             const currentValue = position.quantity * data.price;
             const unrealizedPnL = currentValue - (position.quantity * position.averageBuyPrice);

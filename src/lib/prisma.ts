@@ -22,6 +22,7 @@ const socketExtension = Prisma.defineExtension({
                 model,
                 operation,
             }) {
+                if (transaction) return await query(args);
                 let orderPrevStat = null;
                 if (model == "Order" && operation == "update") {
                     const obj = await query({
@@ -30,7 +31,6 @@ const socketExtension = Prisma.defineExtension({
                     orderPrevStat = (obj as Order)?.status;
                 }
                 const result = await query(args);
-                if (transaction) return result;
                 try {
                     switch (model) {
                         case "Order":

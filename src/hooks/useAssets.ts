@@ -36,8 +36,12 @@ export default function useTrading() {
             (sum, pos) => sum + pos.currentValue,
             0
         );
+        
         setTotalValue(positionsValue + balance);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
+    useEffect(() => {
         if (socket) {
             const handlePositionUpdate = (data: Position) => {
                 setPositions((prevPositions) => {

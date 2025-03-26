@@ -2,6 +2,7 @@ import { verifySession } from "@/lib/dal";
 import { getMarketData } from "@/lib/market";
 import prisma from "@/lib/prisma";
 import { executeOrder } from "@/lib/trading";
+import { roundToDecimals } from "@/utils/number";
 import { OrderSide, OrderType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -44,16 +45,20 @@ export async function POST(request: NextRequest) {
     try {
 
         const body = await request.json();
-        const { id, type, side, quantity, price, stopPrice } = body;
+        const { symbol, type, side, quantity, stopPrice } = body;
     
-        if (!id || !quantity || !type || !side) {
+        if (!symbol || !quantity || !type || !side) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 }); 
         }
-        if (quantity <= 0) {
-            return NextResponse.json({ message: 'Quantity must be positive' }, { status: 400 });
+        const marketData = await getMarketData(symbol);
+        if (!marketData) {
+            return NextResponse.json({ message: 'Market data not found: ' + symbol }, { status: 404 });
         }
-        const marketData = await getMarketData(id);
-    
+        const price = marketData!.price;
+        if (quantity < 1/price) {
+            return NextResponse.json({ message: 'Quantity must be greater than ' + roundToDecimals(1/price, 1) }, { status: 400 });
+        }
+
         if (side == OrderSide.BUY) {
             const user = await prisma.user.findUnique({
                 where: { id: Number(uid) },
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
         const order = await prisma.order.create({
             data: {
               userId: Number(uid),
-              symbol: marketData.id,
+              symbol: marketData.symbol,
               quantity,
               price,
               stopPrice,
@@ -100,15 +105,17 @@ export async function POST(request: NextRequest) {
     
         if (type === OrderType.MARKET) {
             try {
-              const trade = await executeOrder(order.id);
-              
-              if (trade) {
-                return NextResponse.json({
-                  orderId: order.id,
-                  status: 'FILLED',
-                  trade,
-                });
-              }
+                console.log('Executing market order:', order);
+                    
+                const trade = await executeOrder(order.id);
+                
+                if (trade) {
+                    return NextResponse.json({
+                    orderId: order.id,
+                    status: 'FILLED',
+                    trade,
+                    });
+                }
             } catch (executeError) {
               console.error('Error executing market order:', executeError);
             }

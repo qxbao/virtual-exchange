@@ -38,26 +38,19 @@ interface Binance24HFullResponse {
     count: number;
 }
 
-export async function getMarketData(symbol: string): Promise<MarketData> {
+export async function getMarketData(symbol: string): Promise<MarketData | null> {
     const cachedData = await prisma.marketData.findUnique({
         where: { symbol },
     });
 
+    
     if (
         cachedData &&
         Date.now() - cachedData.updatedAt.getTime() < 10 * 1000
     ) {
         return cachedData;
-    }
-    try {
-        const data = await fetchMarketData(symbol);
-        return data;
-    } catch (e) {
-        console.error(e);
-        console.error("Failed to fetch market data for", symbol);
-        if (cachedData) return cachedData;
-
-        throw new Error(`Unable to get market price for ${symbol}`);
+    } else {
+        return null
     }
 }
 
@@ -100,43 +93,6 @@ export async function updateMarketData(assets: string[] = DefaultBaseAssets) {
     }
 }
 
-async function fetchMarketData(symbol: string) {
-    const response = await fetch(
-        "https://api.binance.com/api/v3/ticker/24hr?" +
-            new URLSearchParams({
-                symbol,
-            }),
-        {
-            headers: { accept: "application/json" },
-        }
-    );
-    const marketData: Binance24HFullResponse = await response.json();
-    const result = await prisma.marketData.upsert({
-        where: { symbol },
-        update: {
-            price: Number(marketData.lastPrice),
-            change: Number(marketData.priceChange),
-            changePercent: Number(marketData.priceChangePercent),
-            high: Number(marketData.highPrice),
-            low: Number(marketData.lowPrice),
-            volume: Number(marketData.quoteVolume),
-            updatedAt: new Date(),
-        },
-        create: {
-            baseAsset: symbol.split("USDT")[0],
-            quoteAsset: "USDT",
-            symbol: marketData.symbol,
-            price: Number(marketData.lastPrice),
-            change: Number(marketData.priceChange),
-            changePercent: Number(marketData.priceChangePercent),
-            high: Number(marketData.highPrice),
-            low: Number(marketData.lowPrice),
-            volume: Number(marketData.quoteVolume),
-        },
-    });
-    return result;
-}
-
 export async function updateSpecialFieldsMarketData(){
         const marketData = await prisma.marketData.findMany({
             select: {
@@ -152,7 +108,6 @@ export async function updateSpecialFieldsMarketData(){
         });
         if (marketData.length === 0) return;
         const symbolSet = new Set(marketData.map((data) => data.symbol));
-        console.log(symbolSet);
         // Binance's non-public API, might be unstable
         const externalResponse = await fetch(
             "https://www.binance.com/bapi/apex/v1/friendly/apex/marketing/complianceSymbolList"

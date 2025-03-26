@@ -5,9 +5,9 @@ import { emitToUser } from "./socket";
 
 export async function executeOrder(orderId: number) {
     try {
-        const order = await prisma.order.findUnique({
+        const order = await prisma.order.findFirst({
             where: {
-                id: orderId
+                id: orderId,
             },
             include: {
                 marketData: true,
@@ -18,7 +18,10 @@ export async function executeOrder(orderId: number) {
             throw new Error('Order not found or not in open status');
         }
 
-        const marketData = await getMarketData(order.marketData.id);
+        const marketData = await getMarketData(order.marketData.symbol);
+        if (!marketData) {
+            throw new Error('Market data not found' + order.symbol);
+        }
         let executionPrice = marketData.price;
 
         if (order.type === 'LIMIT') executionPrice = order.price!;
@@ -39,19 +42,19 @@ export async function executeOrder(orderId: number) {
                 },
             });
 
-            const updatedOrder = await tx.order.update({
-                where: {
-                    id: order.id
-                },
-                data: {
-                    status: OrderStatus.FILLED,
-                    filledQuantity: order.quantity,
-                    executedAt: new Date(),
-                }
-            });
+            const newOrderData = {
+                status: OrderStatus.FILLED,
+                filledQuantity: order.quantity,
+                executedAt: new Date(),
+            };
 
+            const updatedOrder = await tx.order.update({
+                where: { id: order.id },
+                data: newOrderData,
+            });
+            
             if (order.side == OrderSide.BUY) {
-                tx.user.update({
+                await tx.user.update({
                     where: {
                         id: order.userId
                     },
@@ -62,7 +65,7 @@ export async function executeOrder(orderId: number) {
                     }
                 });
             } else {
-                tx.user.update({
+                await tx.user.update({
                     where: {
                         id: order.userId
                     },

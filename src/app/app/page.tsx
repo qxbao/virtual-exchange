@@ -10,6 +10,7 @@ import { bigNumberFormat } from "@/utils/number";
 
 export default function AuthenticatedHome() {
     const [marketData, setMarketData] = useState<MarketData[]>([]);
+    
     useEffect(() => {
         fetch('/api/market/list')
             .then(res => res.json())
