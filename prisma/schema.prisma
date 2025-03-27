@@ -103,7 +103,7 @@ model MarketData {
   marketCap     Float?
   updatedAt     DateTime @default(now())
   orders        Order[]
-
+  positions     Position[]
   @@map("market_data")
 }
 
@@ -114,15 +114,13 @@ model Position {
   symbol          String
   quantity        Float
   averageBuyPrice Float
-  currentPrice    Float    @default(0)
-  currentValue    Float    @default(0)
-  unrealizedPnL   Float    @default(0)
   realizedPnL     Float    @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  marketData MarketData @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
 
   @@unique([userId, symbol])
   @@map("positions")

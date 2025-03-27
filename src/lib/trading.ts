@@ -25,8 +25,12 @@ export async function executeOrder(orderId: number) {
         let executionPrice = marketData.price;
 
         if (order.type === 'LIMIT') executionPrice = order.price!;
+        const feeRate = 0.001; // 0.1%
+        const feeQuantity = order.quantity * feeRate;
+        const effectiveQuantity = order.side === OrderSide.BUY 
+            ? order.quantity - feeQuantity 
+            : order.quantity;
         const totalValue = order.quantity * executionPrice;
-        const fee = totalValue * 0.001;
         
         const result = await prisma.$transaction(async (tx) => {
             const trade = await tx.trade.create({
@@ -38,7 +42,7 @@ export async function executeOrder(orderId: number) {
                     quantity: order.quantity,
                     price: executionPrice,
                     total: totalValue,
-                    fee
+                    fee: feeQuantity,
                 },
             });
 
@@ -60,7 +64,7 @@ export async function executeOrder(orderId: number) {
                     },
                     data: {
                         balance: {
-                            decrement: totalValue + fee
+                            decrement: totalValue
                         }
                     }
                 });
@@ -71,7 +75,7 @@ export async function executeOrder(orderId: number) {
                     },
                     data: {
                         balance: {
-                            increment: totalValue - fee
+                            increment: totalValue * (1 - feeRate)
                         }
                     }
                 });
@@ -88,9 +92,9 @@ export async function executeOrder(orderId: number) {
 
             if (order.side == OrderSide.BUY) {
                 if (existingPosition) {
-                    const newQuantity = existingPosition.quantity + order.quantity;
+                    const newQuantity = existingPosition.quantity + effectiveQuantity;
                     const newAverageBuyPrice = ( 
-                            (existingPosition.averageBuyPrice * existingPosition.quantity) + (order.quantity * executionPrice)
+                            (existingPosition.averageBuyPrice * existingPosition.quantity) + (effectiveQuantity * executionPrice)
                         ) / newQuantity;
                     await tx.position.update({
                         where: {
@@ -113,10 +117,10 @@ export async function executeOrder(orderId: number) {
                         data: {
                             userId: order.userId,
                             symbol: order.symbol,
-                            quantity: order.quantity,
+                            quantity: effectiveQuantity,
                             averageBuyPrice: executionPrice,
                             currentPrice: marketData.price,
-                            currentValue: order.quantity * marketData.price,
+                            currentValue: effectiveQuantity * marketData.price,
                             unrealizedPnL: 0
                         },
                     });
@@ -165,7 +169,7 @@ export async function executeOrder(orderId: number) {
                     userId: order.userId,
                     type: 'ORDER_FILLED',
                     title: 'Order Filled',
-                    message: `Your ${order.side} order for ${order.quantity} ${order.symbol} has been filled at ${executionPrice.toFixed(2)}.`
+                    message: `Your ${order.side} order for ${order.quantity} ${order.symbol} has been filled at ${executionPrice.toFixed(2)}. Fee: ${feeQuantity.toFixed(8)} ${order.symbol}.`
                 }
             });
             return {updatedOrder, trade};

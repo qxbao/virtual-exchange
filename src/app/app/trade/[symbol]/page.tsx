@@ -50,6 +50,7 @@ export default function TradingPage() {
                     </Col>
                     <Col xs={12} className="px-0">
                         <AssetsInformation
+                            positions={positions}
                         />
                     </Col>
                 </Row>

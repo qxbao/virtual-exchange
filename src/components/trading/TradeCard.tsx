@@ -3,6 +3,7 @@ import { roundToDecimals } from "@/utils/number";
 import { OrderType, Position } from "@prisma/client";
 import { useState } from "react";
 import { Form } from "react-bootstrap";
+import { FaDollarSign } from "react-icons/fa6";
 
 export default function TradeCard(
     { symbol, price, asset, positions, balance, isLoading } :
@@ -83,7 +84,7 @@ export default function TradeCard(
                         <div>
                             Max {orderSide.toLowerCase()}: { isLoading ? "..." : 
                                 (
-                                    orderSide == "Buy" ? (balance/price).toLocaleString("en-us", {maximumFractionDigits: 6}) : ((positions.find((p) => p.symbol === symbol)?.quantity ?? 0) * price)
+                                    orderSide == "Buy" ? ((balance/price) * 0.999).toLocaleString("en-us", {maximumFractionDigits: 6}) : ((positions.find((p) => p.symbol === symbol)?.quantity ?? 0) * price)
                                 )
                             } {orderSide == "Buy" ? asset.baseAsset : asset.quoteAsset}
                         </div>
@@ -91,11 +92,15 @@ export default function TradeCard(
                 </div>
                 <div>
                     <button
-                        className={`btn w-100 py-2 text-white rounded-pill fw-bold mt-3 ${orderSide == "Buy" ? "btn-success" : "btn-danger"}`}
+                        className={`btn mb-2 w-100 py-2 text-white rounded-pill fw-bold mt-3 ${orderSide == "Buy" ? "btn-success" : "btn-danger"}`}
                         onClick={createOrder}
                     >
                         <span className="small">{orderSide} {asset.baseAsset}</span>
                     </button>
+                    <div className="smaller d-flex text-secondary align-items-center justify-content-center">
+                        <FaDollarSign/>
+                        Fee: 0.1%
+                    </div>
                 </div>
             </div>
         </div>
