@@ -14,7 +14,7 @@ import AssetsInformation from "@/components/trading/AssetsInformation";
 export default function TradingPage() {
     const router = useRouter()
     const { symbol } = useParams<{ symbol: string }>();
-    const { asset, price, change, changePercent, isLoading, volume, high, low, imageUrl } = useMarketData(symbol as string);
+    const { asset, price, change, changePercent, isLoading, volume, high, low, imageUrl } = useMarketData(symbol);
     const { positions, balance, isLoading:isAssetLoading } = useAssets();
     useEffect(() => {
         fetch(`/api/market/list`)

@@ -96,7 +96,7 @@ export async function executeOrder(orderId: number) {
                     const newAverageBuyPrice = ( 
                             (existingPosition.averageBuyPrice * existingPosition.quantity) + (effectiveQuantity * executionPrice)
                         ) / newQuantity;
-                    await tx.position.update({
+                    const newPos = await tx.position.update({
                         where: {
                             userId_symbol: {
                                 userId: order.userId,
@@ -112,6 +112,7 @@ export async function executeOrder(orderId: number) {
                             updatedAt: new Date()
                         }
                     });
+                    emitToUser(order.userId, 'position-update', newPos)
                 } else {
                     await tx.position.create({
                         data: {
@@ -133,7 +134,7 @@ export async function executeOrder(orderId: number) {
                 const newQuantity = existingPosition.quantity - order.quantity;
                 const realizedPnL = order.quantity * (executionPrice - existingPosition.averageBuyPrice);
                 if (newQuantity > 0) {
-                    await tx.position.update({
+                    const newPos = await tx.position.update({
                         where: {
                             userId_symbol: {
                                 userId: order.userId,
@@ -152,6 +153,7 @@ export async function executeOrder(orderId: number) {
                             updatedAt: new Date()
                         }
                     });
+                    emitToUser(order.userId, 'position-update', newPos)
                 } else {
                     await tx.position.delete({
                         where: {
@@ -161,6 +163,11 @@ export async function executeOrder(orderId: number) {
                             }
                         }
                     });
+                    emitToUser(order.userId, 'position-delete', {
+                        userId: order.userId,
+                        symbol: order.symbol
+                    })
+
                 }
             }
 
