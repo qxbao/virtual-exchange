@@ -133,7 +133,7 @@ export async function executeOrder(orderId: number) {
                 const newQuantity = existingPosition.quantity - order.quantity;
                 const realizedPnL = order.quantity * (executionPrice - existingPosition.averageBuyPrice);
                 if (newQuantity > 0) {
-                    tx.position.update({
+                    await tx.position.update({
                         where: {
                             userId_symbol: {
                                 userId: order.userId,
@@ -153,7 +153,7 @@ export async function executeOrder(orderId: number) {
                         }
                     });
                 } else {
-                    tx.position.delete({
+                    await tx.position.delete({
                         where: {
                             userId_symbol: {
                                 userId: order.userId,
