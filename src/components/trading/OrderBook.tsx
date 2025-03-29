@@ -61,152 +61,193 @@ export default function OrderBook ({ symbol }: { symbol: string }) {
     }, [middlePrice]);
 
     useEffect(() =>  {
-        const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`);
-        ws.addEventListener("open", () => {
-            console.log("Connected to Binance Depth WebSocket");
-        })
+        let ws: WebSocket | null = null;
+        let reconnectTimeout: NodeJS.Timeout | null = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        const baseReconnectDelay = 1000; // Start with 1 second delay
         
-        let lastUpdateId = -1;
-        const eventBuffer: SocketResponse[] = [];
-        let orderBookInitialized = false;
-        
-        const initializeOrderBook = async () => {
-            // Reset state
-            lastUpdateId = -1;
-            orderBookInitialized = false;
-            eventBuffer.length = 0;
+        const connectWebSocket = () => {
+            if (ws) {
+                ws.close();
+            }
             
-            // Fetch the snapshot
-            let snapshotValid = false;
-            while (!snapshotValid) {
-                try {
-                    const response = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol.toUpperCase()}&limit=1000`);
-                    const snapshot = await response.json();
-                    
-                    setBids(snapshot.bids);
-                    setAsks(snapshot.asks);
-                    lastUpdateId = snapshot.lastUpdateId;
-                    snapshotValid = true;
-                    
-                    // Process buffered events
-                    for (const bufferedEvent of eventBuffer) {
-                        if (bufferedEvent.u <= lastUpdateId) {
-                            // Skip events older than or equal to the snapshot
-                            continue;
+            ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth`);
+            let lastUpdateId = -1;
+            const eventBuffer: SocketResponse[] = [];
+            let orderBookInitialized = false;
+            
+            const initializeOrderBook = async () => {
+                // Reset state
+                lastUpdateId = -1;
+                orderBookInitialized = false;
+                eventBuffer.length = 0;
+                
+                // Fetch the snapshot
+                let snapshotValid = false;
+                while (!snapshotValid) {
+                    try {
+                        const response = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol.toUpperCase()}&limit=1000`);
+                        const snapshot = await response.json();
+                        
+                        setBids(snapshot.bids);
+                        setAsks(snapshot.asks);
+                        lastUpdateId = snapshot.lastUpdateId;
+                        snapshotValid = true;
+                        
+                        // Process buffered events
+                        for (const bufferedEvent of eventBuffer) {
+                            if (bufferedEvent.u <= lastUpdateId) {
+                                // Skip events older than or equal to the snapshot
+                                continue;
+                            }
+                            
+                            if (bufferedEvent.U <= lastUpdateId + 1 && bufferedEvent.u >= lastUpdateId + 1) {
+                                // Process valid events within range
+                                processDepthUpdate(bufferedEvent);
+                            }
                         }
                         
-                        if (bufferedEvent.U <= lastUpdateId + 1 && bufferedEvent.u >= lastUpdateId + 1) {
-                            // Process valid events within range
-                            processDepthUpdate(bufferedEvent);
+                        orderBookInitialized = true;
+                    } catch (error) {
+                        console.error("Error fetching order book snapshot:", error);
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retrying
+                    }
+                }
+            };
+            
+            const processDepthUpdate = (data: SocketResponse) => {
+                // Update bids
+                setBids(prevBids => {
+                    const newBids = [...prevBids];
+                    
+                    // Apply bid updates
+                    for (const [price, quantity] of data.b) {
+                        const index = newBids.findIndex(bid => bid[0] === price);
+                        if (parseFloat(quantity) === 0) {
+                            // Remove price level
+                            if (index !== -1) {
+                                newBids.splice(index, 1);
+                            }
+                        } else {
+                            // Update or add price level
+                            if (index !== -1) {
+                                newBids[index] = [price, quantity];
+                            } else {
+                                newBids.push([price, quantity]);
+                            }
                         }
                     }
                     
-                    orderBookInitialized = true;
-                } catch (error) {
-                    console.error("Error fetching order book snapshot:", error);
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retrying
-                }
-            }
-        };
-        
-        ws.addEventListener("message", async(event) => {
-            const data = JSON.parse(event.data);
-            
-            if (!orderBookInitialized) {
-                // Buffer the event if order book isn't initialized yet
-                eventBuffer.push(data);
+                    // Sort bids in descending order by price
+                    return newBids.sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).slice(0, 10);
+                });
                 
-                if (lastUpdateId === -1) {
-                    // Get the first event's update ID range start
-                    lastUpdateId = data.U;
+                // Update asks
+                setAsks(prevAsks => {
+                    const newAsks = [...prevAsks];
                     
-                    // Initialize the order book with snapshot
-                    await initializeOrderBook();
-                }
-            } else {
-                // Regular processing for subsequent events
-                if (data.u < lastUpdateId) {
-                    // Ignore events with last update ID less than our local order book
-                    return;
-                }
-                
-                if (data.U > lastUpdateId + 1) {
-                    // If first update ID is greater than our local order book update ID,
-                    // something went wrong - restart the process
-                    console.log("Order book sync lost, restarting...");
-                    eventBuffer.push(data);
-                    await initializeOrderBook();
-                    return;
-                }
-                
-                // Process the event as it's in the correct sequence
-                processDepthUpdate(data);
-            }
-        });
-        
-        // Function to process depth updates
-        const processDepthUpdate = (data: SocketResponse) => {
-            // Update bids
-            setBids(prevBids => {
-                const newBids = [...prevBids];
-                
-                // Apply bid updates
-                for (const [price, quantity] of data.b) {
-                    const index = newBids.findIndex(bid => bid[0] === price);
-                    if (parseFloat(quantity) === 0) {
-                        // Remove price level
-                        if (index !== -1) {
-                            newBids.splice(index, 1);
-                        }
-                    } else {
-                        // Update or add price level
-                        if (index !== -1) {
-                            newBids[index] = [price, quantity];
+                    // Apply ask updates
+                    for (const [price, quantity] of data.a) {
+                        const index = newAsks.findIndex(ask => ask[0] === price);
+                        if (parseFloat(quantity) === 0) {
+                            // Remove price level
+                            if (index !== -1) {
+                                newAsks.splice(index, 1);
+                            }
                         } else {
-                            newBids.push([price, quantity]);
+                            // Update or add price level
+                            if (index !== -1) {
+                                newAsks[index] = [price, quantity];
+                            } else {
+                                newAsks.push([price, quantity]);
+                            }
                         }
                     }
-                }
+                    
+                    // Sort asks in ascending order by price
+                    return newAsks.sort((a, b) => parseFloat(a[0]) - parseFloat(b[0])).slice(0, 10);
+                });
                 
-                // Sort bids in descending order by price
-                return newBids.sort((a, b) => parseFloat(b[0]) - parseFloat(a[0])).slice(0, 10);
-            });
-            
-            // Update asks
-            setAsks(prevAsks => {
-                const newAsks = [...prevAsks];
-                
-                // Apply ask updates
-                for (const [price, quantity] of data.a) {
-                    const index = newAsks.findIndex(ask => ask[0] === price);
-                    if (parseFloat(quantity) === 0) {
-                        // Remove price level
-                        if (index !== -1) {
-                            newAsks.splice(index, 1);
-                        }
-                    } else {
-                        // Update or add price level
-                        if (index !== -1) {
-                            newAsks[index] = [price, quantity];
-                        } else {
-                            newAsks.push([price, quantity]);
-                        }
-                    }
-                }
-                
-                // Sort asks in ascending order by price
-                return newAsks.sort((a, b) => parseFloat(a[0]) - parseFloat(b[0])).slice(0, 10);
-            });
-            
-            // Update the last update ID
-            lastUpdateId = data.u;
-        };
-        
-        ws.addEventListener("close", () => {
-            console.log("Disconnected from Binance Depth WebSocket");
-        });
+                // Update the last update ID
+                lastUpdateId = data.u;
+            };
 
-        return () => ws.close();
+            ws.addEventListener("open", () => {
+                console.log("Connected to Binance Depth WebSocket");
+                // Reset reconnect attempts on successful connection
+                reconnectAttempts = 0;
+            });
+            
+            ws.addEventListener("message", async(event) => {
+                const data = JSON.parse(event.data);
+                
+                if (!orderBookInitialized) {
+                    // Buffer the event if order book isn't initialized yet
+                    eventBuffer.push(data);
+                    
+                    if (lastUpdateId === -1) {
+                        // Get the first event's update ID range start
+                        lastUpdateId = data.U;
+                        
+                        // Initialize the order book with snapshot
+                        await initializeOrderBook();
+                    }
+                } else {
+                    // Regular processing for subsequent events
+                    if (data.u < lastUpdateId) {
+                        // Ignore events with last update ID less than our local order book
+                        return;
+                    }
+                    
+                    if (data.U > lastUpdateId + 1) {
+                        // If first update ID is greater than our local order book update ID,
+                        // something went wrong - restart the process
+                        console.log("Order book sync lost, restarting...");
+                        eventBuffer.push(data);
+                        await initializeOrderBook();
+                        return;
+                    }
+                    
+                    // Process the event as it's in the correct sequence
+                    processDepthUpdate(data);
+                }
+            });
+            
+            ws.addEventListener("close", () => {
+                console.log("Disconnected from Binance Depth WebSocket");
+                
+                // Try to reconnect with exponential backoff
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    const delay = Math.min(30000, baseReconnectDelay * Math.pow(2, reconnectAttempts));
+                    console.log(`Attempting to reconnect in ${delay/1000} seconds...`);
+                    
+                    reconnectTimeout = setTimeout(() => {
+                        reconnectAttempts++;
+                        connectWebSocket();
+                    }, delay);
+                } else {
+                    console.error("Maximum reconnection attempts reached. Please refresh the page.");
+                }
+            });
+            
+            ws.addEventListener("error", (error) => {
+                console.error("WebSocket error:", error);
+            });
+        };
+        
+        // Initial connection
+        connectWebSocket();
+        
+        // Cleanup function
+        return () => {
+            if (ws) {
+                ws.close();
+            }
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+            }
+        };
     },  [symbol])
     
     return (

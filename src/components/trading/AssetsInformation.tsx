@@ -130,8 +130,7 @@ function OrderItem({ order }: { order: Order }) {
     const [assets, setAssets] = useState({
         baseAsset: "...",
         quoteAsset: "...",
-
-    })
+    });
     useEffect(() => {
         fetch("/api/market/data?symbol=" + order.symbol)
             .then((res) => res.json())

@@ -11,7 +11,7 @@ export default function TradeCard(
 ) {
     const [amount, setAmount]  = useState<string>("");
     const [orderSide, setOrderSide] = useState<"Buy" | "Sell">('Buy');
-    const [orderType, _] = useState<OrderType>('MARKET');
+    const [orderType, setOrderType] = useState<OrderType>('MARKET');
     const createOrder = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if (Number(amount) <= 1/price) return alert("Amount must be greater than " + roundToDecimals(1/price, 1));
@@ -43,7 +43,7 @@ export default function TradeCard(
                 </div>
             </div>
             <div className={`d-flex flex-column flex-grow-1 py-3 px-3 ${style.fullBordered}`}>
-                <div className="p-1 bg-dark d-flex rounded-1 mb-3">
+                <div className="p-1 bg-dark d-flex rounded-1 mb-4">
                     {["Buy", "Sell"].map((e) => {
                         return (
                             <button
@@ -56,8 +56,21 @@ export default function TradeCard(
                         );
                     })}
                 </div>
-                <div className="smaller text-secondary pb-1">
-                    Market
+                <div className="smaller text-secondary pb-2 d-flex">
+                    {
+                        Object.values(OrderType).map((e) => {
+                            return (
+                                <div
+                                    key={e}
+                                    role="button"
+                                    className={`border-0 smaller px-2 rounded-1 ${orderType === e ? 'text-white  fw-semibold' : 'text-secondary'}`}
+                                    onClick={() => setOrderType(e as OrderType)}
+                                >
+                                    {e}
+                                </div>
+                            );
+                        })
+                    }
                 </div>
                 <div className="py-4 border-bottom border-2 border-dark border-top">
                     <div className="mb-3">

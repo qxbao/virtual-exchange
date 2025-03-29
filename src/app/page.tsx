@@ -74,7 +74,7 @@ export default function Home() {
 			<Row>
 				<Col lg={8} xs={12} className="mb-5 mb-lg-0 d-flex flex-column justify-content-center align-items-center align-items-lg-start flex-grow-1 text-center text-lg-start order-1 order-lg-0">
 					<div className="fw-bold h2 text-theme mb-5">
-						VirtualExchange
+						VirtualX
 					</div>
 					<div className="display-4 fw-bold">
 						A Risk-Free Mock Trading Platform
