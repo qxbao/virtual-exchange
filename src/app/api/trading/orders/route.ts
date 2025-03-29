@@ -2,7 +2,7 @@ import { verifySession } from "@/lib/dal";
 import { getMarketData } from "@/lib/market";
 import prisma from "@/lib/prisma";
 import { executeOrder } from "@/lib/trading";
-import { roundToDecimals } from "@/utils/number";
+import { roundToDecimals } from "@/lib/number";
 import { OrderSide, OrderType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 

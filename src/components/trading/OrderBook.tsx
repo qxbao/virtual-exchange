@@ -1,6 +1,6 @@
 import style from "@/app/app/trade/[symbol]/page.module.css";
 import TradingContext from "@/contexts/TradingContext";
-import { numberFormatRouter, roundToDecimals } from "@/utils/number";
+import { numberFormatRouter, roundToDecimals } from "@/lib/number";
 import { useContext, useEffect, useState, useRef } from "react";
 import { IoMdArrowDown, IoMdArrowUp } from "react-icons/io";
 

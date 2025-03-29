@@ -6,7 +6,7 @@ import useMarketData from "@/hooks/useMarketData";
 import style from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
-import { bigNumberFormat } from "@/utils/number";
+import { bigNumberFormat } from "@/lib/number";
 
 export default function AuthenticatedHome() {
     const [marketData, setMarketData] = useState<MarketData[]>([]);

@@ -6,71 +6,13 @@ import Image from "next/image";
 import { useState } from "react";
 import SignupForm from "@/components/SignupForm";
 import SigninForm from "@/components/SigninForm";
-import AlertModal from "@/components/AlertModal";
-import { SignupFormData, SigninFormData } from "@/d.type";
-import { useRouter } from "next/navigation"
 
 export default function Home() {
 	const [signupShow, setSignupShow] = useState(false);
 	const [signinShow, setSigninShow] = useState(false);
-	const [alertShow, setAlertShow] = useState(false);
-	const [alertTitle, setAlertTitle] = useState("");
-	const [alertContent, setAlertContent] = useState("");
-	const [isAlertError, setIsAlertError] = useState(false);
-	const router = useRouter();
 
-	const displayAlert = (title: string, content: string, isError: boolean) => {
-		setAlertShow(true);
-		setAlertTitle(title);
-		setAlertContent(content);
-		setIsAlertError(isError);
-	};
-
-	
-	const handleSignupSubmit = (formData: SignupFormData) => {
-		fetch("/api/users/signup", {
-			method: "POST",
-			body: JSON.stringify(formData),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		}).then((res) => {
-			if (res.ok) {
-				setSignupShow(false);
-				displayAlert("Account created", "You have successfully created an account", false);
-			} else {
-				res.json().then((data) => displayAlert("Error", data.message, true))
-			}
-		});
-	}		
-
-	const handleSigninSubmit = (formData: SigninFormData) => {
-		fetch("/api/users/signin", {
-			method: "POST",
-			body: JSON.stringify(formData),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		}).then((res) => {
-			if (res.ok) {
-				setSigninShow(false);
-				displayAlert("Sign in successful", "You have successfully signed in", false);
-				router.push("/app");
-			} else {
-				res.json().then((data) => displayAlert("Error", data.message, true))
-			}
-		});
-	}
-	
 	return (
 		<Container className="py-5 d-flex flex-grow-1">
-			<AlertModal
-				title={alertTitle}
-				content={alertContent}
-				show={alertShow}
-				isError={isAlertError}
-				onHide={() => setAlertShow(false)}
-			/>
 			<Row>
 				<Col lg={8} xs={12} className="mb-5 mb-lg-0 d-flex flex-column justify-content-center align-items-center align-items-lg-start flex-grow-1 text-center text-lg-start order-1 order-lg-0">
 					<div className="fw-bold h2 text-theme mb-5">
@@ -114,7 +56,6 @@ export default function Home() {
 				</Modal.Header>
 				<Modal.Body className="p-5 d-block pt-0">
 					<SignupForm 
-						onSubmit={handleSignupSubmit}
 						onCancel={() => setSignupShow(false)}
 					/>
 				</Modal.Body>
@@ -142,7 +83,6 @@ export default function Home() {
 				</Modal.Header>
 				<Modal.Body className="p-5 d-block pt-0">
 					<SigninForm 
-						onSubmit={handleSigninSubmit}
 						onCancel={() => setSigninShow(false)}
 					/>
 				</Modal.Body>

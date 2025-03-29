@@ -1,40 +1,20 @@
-import { FormEvent, useRef, useState } from "react";
+import { useActionState, useContext, useEffect, useState } from "react";
 import { Form, Row, Col } from "react-bootstrap";
-import { validateSigninFormData } from "@/lib/validate";
 import { SigninFormData } from "@/d.type";
+import { signin } from "@/actions/auth";
+import { PopupContext } from "@/contexts/PopupContext";
 
 interface SigninFormProps {
-    onSubmit: (formData: SigninFormData) => void;
     onCancel: () => void;
 }
 
-export default function SigninForm({ onSubmit, onCancel }: SigninFormProps) {
+export default function SigninForm({ onCancel }: SigninFormProps) {
     const [formData, setFormData] = useState<SigninFormData>({
-        email: "",
+        username: "",
         password: "",
     });
-    const [validated, setValidated] = useState(false);
-    const [errors, setErrors] = useState<SigninFormData>({
-        email: "",
-        password: ""
-    });
-    const formRef = useRef<HTMLFormElement>(null);
-
-    const validateForm = (): boolean => {
-        const validationErrors = validateSigninFormData(formData);
-        setErrors(validationErrors);
-        return Object.values(validationErrors).every(error => error === "");
-    };
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        setValidated(true);
-
-        if (!validateForm()) {
-            return;
-        }
-        onSubmit(formData);
-    };
+    const [state, formAction, isPending] = useActionState(signin, undefined);
+    const { showPopup } = useContext(PopupContext);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -44,20 +24,31 @@ export default function SigninForm({ onSubmit, onCancel }: SigninFormProps) {
         }));
     };
 
+    useEffect(() => {
+            if (!state?.message) return;
+    
+            if (state?.message !== "User created successfully" && state?.message) {
+                showPopup("Error", state?.message, true);
+            }
+            onCancel();
+            showPopup("Success", state?.message, false);
+        }, [onCancel, showPopup, state?.message]);
+
     return (
-        <Form onSubmit={handleSubmit} ref={formRef} noValidate>
+        <Form action={formAction} noValidate>
             <div className="mb-3">
                 <label className="fw-semibold ms-1 mb-1 small">Username or email <span className="text-danger">*</span></label>
                 <Form.Control
                     type="text"
-                    name="email"
-                    value={formData.email}
+                    name="username"
+                    value={formData.username}
                     onChange={handleChange}
                     placeholder="Username or email"
+                    disabled={isPending}
                     className="py-2 px-3"
-                    isInvalid={validated && errors.email !== ""}
+                    isInvalid={ Boolean(state?.errors?.username) }
                 />
-                <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">{state?.errors?.username}</Form.Control.Feedback>
             </div>
 
             <div className="mb-5">
@@ -70,23 +61,31 @@ export default function SigninForm({ onSubmit, onCancel }: SigninFormProps) {
                             autoComplete="current-password"
                             value={formData.password}
                             onChange={handleChange}
+                            disabled={isPending}
                             placeholder="Password"
                             className="py-2 px-3"
-                            isInvalid={validated && errors.password !== ""}
+                            isInvalid={Boolean(state?.errors?.password)}
                         />
-                        <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+                        <Form.Control.Feedback type="invalid">{state?.errors?.password}</Form.Control.Feedback>
                     </div>
                 </div>
             </div>
 
             <Row className="m-0">
                 <Col xs={6} className="ps-0 pe-1">
-                    <button type="button" onClick={onCancel} className="btn btn-outline-secondary w-100 py-2 fw-semibold">Cancel</button>
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="btn btn-outline-secondary w-100 py-2 fw-semibold">Cancel</button>
                 </Col>
                 <Col xs={6} className="pe-0 ps-1">
-                    <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold">Sign in</button>
+                    <button
+                        disabled={isPending}
+                        type="submit"
+                        className="btn btn-primary w-100 py-2 fw-semibold">Sign in</button>
                 </Col>
             </Row>
         </Form>
     );
 }
+

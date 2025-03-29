@@ -42,7 +42,7 @@ export default function TradingPage() {
                         <TradeCard
                             symbol={symbol}
                             asset={asset}
-                            price={price!}
+                            assetPrice={price!}
                             isLoading={isAssetLoading}
                             positions={positions}
                             balance={balance}

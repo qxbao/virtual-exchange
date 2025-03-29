@@ -1,7 +1,7 @@
 import style from "@/app/app/trade/[symbol]/page.module.css";
 import useMarketData from "@/hooks/useMarketData";
 import useOrders from "@/hooks/useOrders";
-import { roundToDecimals } from "@/utils/number";
+import { roundToDecimals } from "@/lib/number";
 import { Order, Position } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";

@@ -1,5 +1,5 @@
 import TradingContext from "@/contexts/TradingContext";
-import { bigNumberFormat } from "@/utils/number";
+import { bigNumberFormat } from "@/lib/number";
 import { useContext } from "react";
 import { Container } from "react-bootstrap";
 import { MdAutoGraph } from "react-icons/md";
