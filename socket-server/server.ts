@@ -91,7 +91,11 @@ server.listen(PORT, () => {
 
 cron.schedule('*/3 * * * * *', async () => {
   await fetch(`${process.env.NEXTJS_URL}/api/market/update`, {
-    method: 'POST'
+    method: 'POST',
+    headers: {
+      "Content-Type": 'application/json',
+    },
+    body: JSON.stringify({ secret: process.env.SOCKET_SECRET })
   });
   console.log('Market data updated at:', new Date().toISOString());
 });

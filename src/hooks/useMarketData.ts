@@ -15,36 +15,38 @@ export default function useMarketData(symbol: string) {
     const [low, setLow] = useState<number>(0)
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [asset, setAsset] = useState({
-        baseAsset: "",
-        quoteAsset: "",
+        baseAsset: "XXX",
+        quoteAsset: "YYY",
     });
     const { socket, subscribeToMarket, unsubscribeFromMarket } = useSocket();
 
     useEffect(() => {
         if (!symbol) return;
-
+        console.log(symbol);
         const fetchInitialData = async () => {
-            try {
-                const marketData:MarketData = await fetch("/api/market/data?symbol=" + symbol).then((res) => res.json());
-                setPrice(marketData.price);
-                setChangePercent(marketData.changePercent);
-                setChange(marketData.change);
-                setAsset({
-                    baseAsset: marketData.baseAsset,
-                    quoteAsset: marketData.quoteAsset,
+            fetch("/api/market/data?symbol=" + symbol)
+                .then((res) => res.json())
+                .then((marketData: MarketData) => {
+                    setPrice(marketData.price);
+                    setChangePercent(marketData.changePercent);
+                    setChange(marketData.change);
+                    setAsset({
+                        baseAsset: marketData.baseAsset,
+                        quoteAsset: marketData.quoteAsset,
+                    });
+                    setVolume(marketData.volume);
+                    setName(marketData.name as string);
+                    setImageUrl(marketData.imageUrl as string);
+                    setHigh(marketData.high!);
+                    setLow(marketData.low!);
+                    setIsLoading(false);
+                }).catch(error => {
+                    console.error("Error fetching market data:", error);
+                    return setTimeout(() => {
+                        fetchInitialData();
+                    }, 1000);
                 });
-                setVolume(marketData.volume);
-                setName(marketData.name as string);
-                setImageUrl(marketData.imageUrl as string);
-                setHigh(marketData.high!);
-                setLow(marketData.low!);
-            } catch (error) {
-                console.error("Error fetching market data:", error);
-            } finally {
-                setIsLoading(false);
-            }
         };
-
         fetchInitialData();
 
         subscribeToMarket([symbol]);
@@ -69,7 +71,8 @@ export default function useMarketData(symbol: string) {
                 unsubscribeFromMarket([symbol]);
             };
         }
-    }, [symbol, socket, subscribeToMarket, unsubscribeFromMarket]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return { asset, price, change, changePercent, isLoading, marketCap, volume, name, imageUrl, high, low };
 }

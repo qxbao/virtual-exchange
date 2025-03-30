@@ -57,8 +57,8 @@ model Order {
   quantity       Float
   price          Float?
   stopPrice      Float?
+  limitPrice     Float?
   status         OrderStatus @default(OPEN)
-  filledQuantity Float       @default(0)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   executedAt     DateTime?

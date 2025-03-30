@@ -6,7 +6,10 @@ type ButtonProps = Readonly<{
 
 export default function ThemeButton({ children, className, onClick }: ButtonProps) {
     return (
-        <button className={"rounded-pill theme-button " + className} onClick={onClick}>
+        <button
+            type="button"
+            className={"rounded-pill theme-button " + className}
+            onClick={onClick ? onClick : undefined}>
           {children}
         </button>
     );

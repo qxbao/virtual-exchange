@@ -9,16 +9,23 @@ export default function useOrders() {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            try {
-                const response = await fetch("/api/trading/orders");
-                if (response.ok) {
-                    const data = await response.json();
+            const response = await fetch("/api/trading/orders")
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to fetch orders");
+                    return res.json();
+                })
+                .then((data: Order[]) => {
                     setOrders(data);
-                }
-            } catch (error) {
-                console.error("Error fetching orders:", error);
-            } finally {
-                setIsLoading(false);
+                    return true;;
+                })
+                .catch(err => {
+                    console.error("Error fetching orders:", err);
+                    return false;
+                });
+            if (response) setIsLoading(false);
+            else {
+                setIsLoading(true);
+                return setTimeout(() => fetchOrders(), 1000);
             }
         };
 

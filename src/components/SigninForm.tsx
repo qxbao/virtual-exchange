@@ -25,14 +25,14 @@ export default function SigninForm({ onCancel }: SigninFormProps) {
     };
 
     useEffect(() => {
-            if (!state?.message) return;
-    
-            if (state?.message !== "User created successfully" && state?.message) {
-                showPopup("Error", state?.message, true);
-            }
-            onCancel();
-            showPopup("Success", state?.message, false);
-        }, [onCancel, showPopup, state?.message]);
+        if (!state?.message) return;
+
+        if (state?.message !== "User created successfully" && state?.message) {
+            showPopup("Error", state?.message, true, null);
+        }
+        onCancel();
+        showPopup("Success", state?.message, false, null);
+    }, [onCancel, showPopup, state?.message]);
 
     return (
         <Form action={formAction} noValidate>

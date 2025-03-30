@@ -2,8 +2,8 @@ import style from "@/app/app/trade/[symbol]/page.module.css";
 import useMarketData from "@/hooks/useMarketData";
 import useOrders from "@/hooks/useOrders";
 import { roundToDecimals } from "@/lib/number";
-import { Order, Position } from "@prisma/client";
-import { useEffect, useState } from "react";
+import { Position, Prisma } from "@prisma/client";
+import { useState } from "react";
 import { Col, Row } from "react-bootstrap";
 
 export default function AssetsInformation({positions} : {positions: Position[]}) {
@@ -42,14 +42,31 @@ export default function AssetsInformation({positions} : {positions: Position[]})
                         <span className="mx-auto my-auto">Loading...</span> :
                         (
                             orders.filter((order) => order.status === "OPEN").length === 0 ? <span className="mx-auto my-auto">No data available</span> : <>
-                                <Row className="smaller">
+                                <Row className="smaller text-secondary mb-2">
                                     <Col lg={2}>
                                         Symbol
+                                    </Col>
+                                    <Col lg={2}>
+                                        Order time
+                                    </Col>
+                                    <Col lg={2}>
+                                        Side
+                                    </Col>
+                                    <Col lg={2}>
+                                        Price
+                                    </Col>
+                                    <Col lg={2}>
+                                        Total amount
+                                    </Col>
+                                    <Col lg={2}>
+                                        Status
                                     </Col>
                                 </Row>
                                 {
                                     orders.filter((order) => order.status === "OPEN").map((order) => (
-                                        <OrderItem key={order.id} order={order} />
+                                        <OrderItem key={order.id} order={order as Prisma.OrderGetPayload<{
+                                            include: { marketData: true }
+                                        }>} />
                                     ))
                                 }</>
                         )
@@ -84,7 +101,9 @@ export default function AssetsInformation({positions} : {positions: Position[]})
                                 </Row>
                                 {
                                     orders.filter((order) => order.status === "FILLED").map((order) => (
-                                        <OrderItem key={order.id} order={order} />
+                                        <OrderItem key={order.id} order={order as Prisma.OrderGetPayload<{
+                                            include: { marketData: true }
+                                        }>} />
                                     ))
                                 }</>
                         )
@@ -126,26 +145,13 @@ export default function AssetsInformation({positions} : {positions: Position[]})
     );
 }
 
-function OrderItem({ order }: { order: Order }) {
-    const [assets, setAssets] = useState({
-        baseAsset: "...",
-        quoteAsset: "...",
-    });
-    useEffect(() => {
-        fetch("/api/market/data?symbol=" + order.symbol)
-            .then((res) => res.json())
-            .then((data) => {
-                setAssets(data);
-            })
-            .catch((error) => {
-                console.error("Error fetching market data:", error)
-            })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+function OrderItem({ order }: { order: Prisma.OrderGetPayload<{
+    include: { marketData: true }
+}>}) {
     return (
         <Row className="small py-1 mb-2 d-flex align-items-center">
             <Col lg={2} className="fw-semibold">
-                <span>{assets.baseAsset + "/" + assets.quoteAsset}</span>
+                <span>{order.marketData.baseAsset + "/" + order.marketData.quoteAsset}</span>
             </Col>
             <Col lg={2} className="smaller">
                 <div>{new Date(order.createdAt).toLocaleDateString("en-uk")}</div>
@@ -155,11 +161,11 @@ function OrderItem({ order }: { order: Order }) {
                 <span className={order.side == "BUY" ? "text-success" : "text-danger"}>{order.side}</span>
             </Col>
             <Col lg={2} className="smaller">
-                <div>{roundToDecimals(order.price!, 5)}</div>
-                <div>{order.type == "MARKET" ? order.type : order.stopPrice}</div>
+                <div className={order.type ==  "MARKET" ? "d-block": "d-none"}>{roundToDecimals(order.price!, 5)}</div>
+                <div>{order.type == "MARKET" ? order.type : roundToDecimals(order.stopPrice!, 5)}</div>
             </Col>
             <Col lg={2}>
-                <span>{order.quantity + " " + assets.baseAsset}</span>
+                <span>{order.quantity + " " + order.marketData.baseAsset}</span>
             </Col>
             <Col lg={2}>
                 <span>{order.status}</span>

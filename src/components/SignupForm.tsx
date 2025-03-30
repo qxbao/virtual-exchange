@@ -22,10 +22,10 @@ export default function SignupForm({ onCancel }: SignupFormProps) {
         if (!state?.message) return;
 
         if (state?.message !== "User created successfully" && state?.message) {
-            showPopup("Error", state?.message, true);
+            showPopup("Error", state?.message, true, null);
         }
         onCancel();
-        showPopup("Success", state?.message, false);
+        showPopup("Success", state?.message, false, null);
     }, [onCancel, showPopup, state?.message]);
 
     return (

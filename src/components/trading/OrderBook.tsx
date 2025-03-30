@@ -178,6 +178,21 @@ export default function OrderBook ({ symbol }: { symbol: string }) {
                 // Reset reconnect attempts on successful connection
                 reconnectAttempts = 0;
             });
+
+            ws.addEventListener("error", (error) => {
+                console.error("WebSocket error:", error);
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    const delay = Math.min(30000, baseReconnectDelay * Math.pow(2, reconnectAttempts));
+                    console.log(`Attempting to reconnect in ${delay/1000} seconds...`);
+                    
+                    reconnectTimeout = setTimeout(() => {
+                        reconnectAttempts++;
+                        connectWebSocket();
+                    }, delay);
+                } else {
+                    console.error("Maximum reconnection attempts reached. Please refresh the page.");
+                }
+            });
             
             ws.addEventListener("message", async(event) => {
                 const data = JSON.parse(event.data);

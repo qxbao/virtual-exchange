@@ -70,4 +70,38 @@ export type SigninFormState =
       }
       message?: string;
     }
-  | undefined
+  | undefined;
+
+export const MarketOrderFormSchema = z.object({
+    symbol: z.string()
+      .min(1, { message: "Symbol is required" })
+      .refine(async (e) => {
+        const market = await prisma.marketData.findFirst({
+          where: { symbol: e },
+          select: { id: true },
+        });
+        return !!market;
+      }, { message: "Market data not found" }),
+    type: z.enum(["MARKET", "LIMIT", "STOP"], {
+      message: "Invalid order type"
+    }),
+    side: z.enum(["BUY", "SELL"]),
+    quantity: z.number().positive({ message: "Quantity must be greater than 0" }),
+    stopPrice: z.number().optional(),
+})
+
+export const LimitOrderFormSchema = MarketOrderFormSchema.extend({
+    stopPrice: z.number().positive({ message: "Stop price must be greater than 0" })
+});
+
+export type OrderState = {
+  errors?: {
+    symbol?: string[];
+    type?: string[];
+    side?: string[];
+    quantity?: string[];
+    stopPrice?: string[];
+  };
+  message?: string;
+  isErr?: boolean;
+} | undefined;

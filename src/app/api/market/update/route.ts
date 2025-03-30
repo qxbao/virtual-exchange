@@ -2,8 +2,17 @@ import { updateMarketData, updateSpecialFieldsMarketData } from "@/lib/market";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(_: NextRequest) {
+let isExecuting = false;
+
+export async function POST(req: NextRequest) {
+    if (isExecuting) return NextResponse.json({ message: "Already executing" }, { status: 429 });
+    isExecuting = true;
     try {
+        const body = await req.json();
+        const { secret } = body;
+        if (!secret || secret !== process.env.SOCKET_SECRET) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
         const dataList = await prisma.marketData.findMany({
             select: {
                 symbol: true,
@@ -18,5 +27,7 @@ export async function POST(_: NextRequest) {
     } catch (error) {
         console.error("Error fetching:", error);
         return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
+    } finally {
+        isExecuting = false;
     }
 }

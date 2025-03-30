@@ -1,8 +1,9 @@
+import { createOrder } from "@/actions/trading";
 import style from "@/app/app/trade/[symbol]/page.module.css";
 import { PopupContext } from "@/contexts/PopupContext";
 import { roundToDecimals } from "@/lib/number";
 import { OrderType, Position } from "@prisma/client";
-import { useContext, useState } from "react";
+import { startTransition, useActionState, useContext, useEffect, useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { FaDollarSign } from "react-icons/fa6";
 
@@ -10,46 +11,42 @@ export default function TradeCard(
     { symbol, assetPrice, asset, positions, balance, isLoading } :
     { symbol: string, assetPrice: number, asset: { baseAsset: string, quoteAsset: string }, positions: Position[], balance: number, isLoading: boolean }
 ) {
+    const [formState, formAction, formPending] = useActionState(createOrder, undefined);
     const [amount, setAmount]  = useState<string>("");
     const [price, setPrice] = useState<string>("");
     const [total, setTotal] = useState<string>("");
     const [orderSide, setOrderSide] = useState<"Buy" | "Sell">('Buy');
     const [orderType, setOrderType] = useState<OrderType>('MARKET');
     const { showPopup } = useContext(PopupContext);
-    const fetchOrder = () => {
-        if (Number(amount) <= 1/assetPrice) return alert("Amount must be greater than " + roundToDecimals(1/assetPrice, 1));
-        if (orderType ==   "MARKET") {
-            fetch("/api/trading/orders", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    symbol,
-                    type: orderType.toUpperCase(),
-                    side: orderSide.toUpperCase(),
-                    quantity: Number(amount),
-                    stopPrice: price == "" ? undefined : Number(price)
-                })
-            }).then(async (res) => {
-                if (res.ok) return res.json();
-                throw new Error((await res.json()).message);
-            })
-            .then(() => alert("Order created successfully"))
-            .catch((error) => alert("Error creating order: " + error.message));
-        }
-    }
 
-    const el = (<Row className="my-5">
+    const orderInformationPopup = (<Row className="my-5">
         <Col><div className="fw-bold text-secondary mb-1 small">Price</div><div className="text-black">{orderType=="MARKET" ? "Market" : price}</div></Col>
         <Col><div className="fw-bold text-secondary mb-1 small">Amount</div><div className="text-black">{amount}</div></Col>
         <Col><div className="fw-bold text-secondary mb-1 small">Order type</div><div className="text-black">{orderType}</div></Col>
     </Row>);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        if (formPending) return;
         e.preventDefault();
-        showPopup("Order confirmation", el, false, () => fetchOrder())
+        const formData = new FormData(e.currentTarget);
+        showPopup("Order confirmation", orderInformationPopup, false, () => {
+            startTransition(() => {
+                formAction(formData);
+            })
+        });
     }
+
+    useEffect(() => {
+        if (formPending == true) return;
+        if (formState?.message) {
+            if (formState?.isErr) {
+                showPopup("Error", formState?.message, true, null);
+            } else {
+                showPopup("Success", formState?.message, false, null);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formPending]);
 
     return (
         <div className="d-flex flex-column h-100">
@@ -63,6 +60,7 @@ export default function TradeCard(
                     {["Buy", "Sell"].map((e) => {
                         return (
                             <button
+                                type="button"
                                 key={e}
                                 className={`border-0 flex-grow-1 smaller bold px-2 py-2 rounded-1 ${orderSide === e ? (e == "Sell" ? "bg-danger" : "bg-success") : 'text-secondary bg-transparent'}`}
                                 onClick={() => setOrderSide(e as "Buy" | "Sell")}
@@ -71,6 +69,9 @@ export default function TradeCard(
                             </button>
                         );
                     })}
+                    <input type="hidden" name="orderSide" value={orderSide}/>
+                    <input type="hidden" name="symbol" value={symbol}/>
+                    <input type="hidden" name="orderType" value={orderType}/>
                 </div>
                 <div className="py-2">
                     <div className="smaller text-secondary pb-1 mb-3 d-flex border-2 border-dark border-bottom">
@@ -92,21 +93,29 @@ export default function TradeCard(
                     <div className="mb-3">
                         <label className="mb-1 smaller">{"Price (" + asset.quoteAsset + ")"}</label>
                         <Form.Control
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            name="stopPrice"
                             className={`bg-dark py-2 ${style.tradeInput}`}
                             value={orderType === "MARKET" ? "" : price }
-                            placeholder={orderType === "MARKET" ? "Place order at market assetPrice" : ""}
+                            placeholder={orderType === "MARKET" ? "Place order at market price" : ""}
                             onChange={(e) => {
                                 if (!isNaN(Number(e.target.value))) {
                                     setPrice(e.target.value)
                                 }
                             }}
+                            isInvalid={Boolean(formState?.error?.stopPrice)}
                             disabled={orderType === "MARKET"}/>
+                        <Form.Control.Feedback className="smaller" type="invalid">{formState?.error?.stopPrice}</Form.Control.Feedback>
+
                     </div>
                     <div className="mb-3">
                         <label className="mb-1 smaller">{"Amount (" + asset.baseAsset + ")"}</label>
                         <Form.Control
                             className={`bg-dark py-2 ${style.tradeInput}`}
                             type="number"
+                            name="quantity"
                             value={amount}
                             onChange={(e) => {
                                 if (!isNaN(Number(e.target.value))) {
@@ -114,7 +123,10 @@ export default function TradeCard(
                                     setTotal(e.target.value == "" ? "" : (Number(e.target.value) * assetPrice).toString())
                                 }
                             }}
+                            isInvalid={Boolean(formState?.error?.quantity)}
                             placeholder={`Min ${roundToDecimals(1/assetPrice, 1)} ${asset.baseAsset}`}/>
+                        <Form.Control.Feedback className="smaller" type="invalid">{formState?.error?.quantity}</Form.Control.Feedback>
+                    
                     </div>
                     <div className={`mb-3 ${orderType == "MARKET" ? "d-none" : ""}`}>
                         <label className="mb-1 smaller">{"Total (" + asset.quoteAsset + ")"}</label>
@@ -146,6 +158,8 @@ export default function TradeCard(
                     <div>
                         <button
                             className={`btn mb-2 w-100 py-2 text-white rounded-pill fw-bold mt-3 ${orderSide == "Buy" ? "btn-success" : "btn-danger"}`}
+                            type="submit"
+                            disabled={formPending || amount == "" || (orderType == "LIMIT" && price == "")}
                         >
                             <span className="small">{orderSide} {asset.baseAsset}</span>
                         </button>

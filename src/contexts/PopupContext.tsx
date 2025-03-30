@@ -5,7 +5,7 @@ import { Modal } from "react-bootstrap";
 import { FaBan, FaCheck } from "react-icons/fa6";
 
 type PopupContextType = {
-    showPopup: (title: string,  message: ReactNode | string, isError: boolean, onConfirm?: () => void) => void;
+    showPopup: (title: string,  message: ReactNode | string, isError: boolean, onConfirm: (() => void) | null) => void;
 }
 
 const PopupContext = createContext<PopupContextType>({} as PopupContextType);
@@ -16,12 +16,13 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
     const [message, setMessage] = useState<ReactNode | string>("");
     const [isAlertError, setIsAlertError] = useState(false);
     const [onConfirm, setOnConfirm] = useState<(() => void) | undefined>(undefined);
-    const showPopup = (title: string, message: React.ReactNode | string, isError:boolean, onConfirm?: () => void) => {
+    const showPopup = (title: string, message: React.ReactNode | string, isError:boolean, onConfirm: (() => void) | null) => {
         setTitle(title);
         setMessage(message);
         setAlertShow(true);
         setIsAlertError(isError);
-        if (typeof onConfirm === "function") setOnConfirm(() => onConfirm);
+        if (onConfirm != null) setOnConfirm(() => onConfirm);
+        else setOnConfirm(undefined);
     };
 
     return (
@@ -38,7 +39,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
                     <div className={"fw-bold h4 mb-2 " + (isAlertError ? "text-danger" : "text-success")}>
                         {title}
                     </div>
-                    <div className="mb-4 text-secondary">
+                    <div className="mb-5 text-secondary">
                         {message}
                     </div>
                     <div className="d-flex gap-2 align-items-center justify-content-center">
@@ -50,7 +51,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
                         <ThemeButton
                             onClick={() => {
                                 setAlertShow(false)
-                                if (onConfirm) onConfirm()
+                                if (onConfirm) onConfirm() 
                             }}
                             className="px-5 py-2 text-white border-0">Confirm</ThemeButton>
                     </div>

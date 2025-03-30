@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSocket } from "@/contexts/SocketContext";
 import { Position } from "@prisma/client";
 
-export default function useTrading() {
+export default function useAssets() {
     const [positions, setPositions] = useState<Position[]>([]);
     const [totalValue, setTotalValue] = useState(0);
     const [balance, setBalance] = useState(0);
@@ -11,23 +11,39 @@ export default function useTrading() {
 
     useEffect(() => {
         const fetchPortfolio = async () => {
-            try {
-                const response = await fetch("/api/trading/positions");
-                if (response.ok) {
-                    const data = await response.json();
-                    setPositions(data);
-                }
+            const portfolioResponse = await fetch("/api/trading/positions").then((res) => {
+                if (!res.ok) throw new Error("Error fetching positions");
+                return res.json();
+            }).then((data) => {
+                setPositions(data);
+                return true;
+            }).catch(error => {
+                console.error("Error fetching positions:", error);
+                return false;
+            });
 
-                const balanceResponse = await fetch("/api/users/balance");
-                if (balanceResponse.ok) {
-                    const balanceData = await balanceResponse.json();
-                    setBalance(balanceData.balance);
-                }
-            } catch (error) {
-                console.error("Error fetching portfolio:", error);
-            } finally {
-                setIsLoading(false);
+            if (portfolioResponse === false) return setTimeout(() => {
+                fetchPortfolio();
+            }, 1000);
+
+            const balanceResponse = await fetch("/api/users/balance")
+                .then((res) => {
+                    if (!res.ok) throw new Error("Error fetching balance");
+                    return res.json();
+                }).then((data) => {
+                    setBalance(data.balance);
+                    return true;
+                }).catch(error => {
+                    console.error("Error fetching balance:", error);
+                    return false;
+                });
+            
+            if (balanceResponse === false) {
+                return setTimeout(() => {
+                    fetchPortfolio();
+                }, 1000);
             }
+            setIsLoading(false);
         };
 
         fetchPortfolio();
