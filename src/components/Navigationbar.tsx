@@ -19,22 +19,7 @@ export default function NavigationBar({ userId, username }: { userId: number, us
 				<Link href="/app" className="me-4">
 					<div className="h3 mb-0 text-theme fw-black">VirtualX</div>
 				</Link>
-				<Navbar.Collapse >
-					<Nav className="me-auto align-items-lg-center gap-4">
-						{
-							Object.keys(navItems).map((key) => {
-								return (
-									<Link key={key} href={navItems[key]}>
-										<div className="small">
-											{key}
-										</div>
-									</Link>
-								);
-							})
-						}
-					</Nav>
-				</Navbar.Collapse>
-				<div className="d-flex align-items-center gap-2">
+				<div className="d-flex align-items-center gap-2 order-lg-1 order-0">
 					<div className="position-relative" onMouseOver={() => setUserDropdown(true)} onMouseLeave={() => setUserDropdown(false)}>
 						<FaRegUser className="me-2 fs-5" />
 						<DropdownItem isShow={userDropdown}>
@@ -60,6 +45,21 @@ export default function NavigationBar({ userId, username }: { userId: number, us
 					</div>
 					<Navbar.Toggle />
 				</div>
+				<Navbar.Collapse className="order-lg-0 order-1" >
+					<Nav className="me-auto align-items-lg-center gap-4">
+						{
+							Object.keys(navItems).map((key) => {
+								return (
+									<Link key={key} href={navItems[key]}>
+										<div className="small">
+											{key}
+										</div>
+									</Link>
+								);
+							})
+						}
+					</Nav>
+				</Navbar.Collapse>
 			</Container>
 		</Navbar>
 	);
@@ -67,7 +67,7 @@ export default function NavigationBar({ userId, username }: { userId: number, us
 
 function DropdownItem({children, isShow}:  {children: React.ReactNode, isShow: boolean}) {
 	return (
-		<div className={`${style.dropdownItem} ${isShow ? style.show : ""}`}>
+		<div style={{zIndex: 5}} className={`${style.dropdownItem} ${isShow ? style.show : ""}`}>
 			<div className={`rounded-3 px-4 py-3 ${style.dropdownContent}`}>
 				{children}
 			</div>

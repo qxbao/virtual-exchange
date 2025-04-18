@@ -69,3 +69,7 @@ a:hover {
 .fw-black {
   font-weight: 900 !important;
 }
+
+.no-wrap {
+  white-space: nowrap;
+}

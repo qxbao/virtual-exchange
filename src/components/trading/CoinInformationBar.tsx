@@ -31,15 +31,15 @@ export default function CoinInformationBar() {
                     {isLoading ? "..." : ((changePercent > 0 ? "+" : "") + changePercent.toFixed(2) + "%")}
                 </div>
             </div>
-            <div className="smaller">
+            <div className="smaller no-wrap">
                 <div className="text-secondary">24h high</div>
                 <div>{isLoading ? "..." : high.toLocaleString("en-us")}</div>
             </div>
-            <div className="smaller">
+            <div className="smaller no-wrap">
                 <div className="text-secondary">24h low</div>
                 <div>{isLoading ? "..." : low.toLocaleString("en-us")}</div>
             </div>
-            <div className="smaller">
+            <div className="smaller no-wrap">
                 <div className="text-secondary">24h volume (USDT)</div>
                 <div>{isLoading ? "..." : bigNumberFormat(volume)}</div>
             </div>

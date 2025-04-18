@@ -1,7 +1,7 @@
 import { createOrder } from "@/actions/trading";
 import style from "@/app/app/trade/[symbol]/page.module.css";
 import { PopupContext } from "@/contexts/PopupContext";
-import { numberFormatRouter, roundToDecimals } from "@/lib/number";
+import { roundToDecimals } from "@/lib/number";
 import { OrderType, Position } from "@prisma/client";
 import { startTransition, useActionState, useContext, useEffect, useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";

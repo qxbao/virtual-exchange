@@ -5,7 +5,7 @@ import { PopupProvider } from "@/contexts/PopupContext";
 
 const poppins = Poppins({
   variable: "--font-poppins",
-  weight: ["300", "400", "500", "600", "700", "900"],
+  weight: ["500", "600", "700", "900"],
   subsets: ["latin"],
   display: 'swap'
 });

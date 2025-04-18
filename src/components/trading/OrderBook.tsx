@@ -345,7 +345,7 @@ function OrderBar({ price, amount, total, maxAmount, color }: {
         barRef.current!.style.transform = `translateX(${100 -  (total / maxAmount * 100)}%)`;
     }, [maxAmount, total])
     return <div className={`d-flex px-3 smaller ${style.orderBar}`}>
-        <div className="text-start col-4"  style={{ color }}>
+        <div className="text-start fw-semibold col-4"  style={{ color }}>
             {
                 roundToDecimals(parseFloat(price), 5)
             }
