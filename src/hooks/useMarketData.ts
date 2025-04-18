@@ -71,8 +71,7 @@ export default function useMarketData(symbol: string) {
                 unsubscribeFromMarket([symbol]);
             };
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [socket, subscribeToMarket, symbol, unsubscribeFromMarket]);
 
     return { asset, price, change, changePercent, isLoading, marketCap, volume, name, imageUrl, high, low };
 }

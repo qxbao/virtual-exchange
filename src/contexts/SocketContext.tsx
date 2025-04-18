@@ -34,41 +34,44 @@ export function SocketProvider({ children, uid } : { children: React.ReactNode, 
 
     useEffect(() => {
         if (isNaN(uid)) return;
-        // Connect to Socket server
-        const socketInstance = io(
-          process.env.SOCKET_SERVER_URL || 'http://localhost:4000',
-          {
-            reconnectionDelay: 1000,
-            reconnection: true,
-            reconnectionAttempts: 10,
-            transports: ['websocket'],
-            autoConnect: true
-          }
-        );
-
-        socketInstance.on('connect', () => {
-            console.log('Connected to socket server');
-            setIsConnected(true);
-
-            if (uid) {
-                socketInstance.emit('authenticate', { userId: Number(uid) });
-            }
-        })
-
-        socketInstance.on('disconnect', () => {
-            console.log('Disconnected from socket server');
-            setIsConnected(false);
-        });
-
-        socketInstance.on('connect_error', (err) => {
-            console.error('Socket connection error:', err);
-        });
-        
-        setSocket(socketInstance);
-
-        return () => {
-            socketInstance.disconnect();
-        };
+        try {
+            const socketInstance = io(
+              process.env.SOCKET_SERVER_URL || 'http://localhost:4000',
+              {
+                reconnectionDelay: 1000,
+                reconnection: true,
+                reconnectionAttempts: 10,
+                transports: ['websocket'],
+                autoConnect: true,
+              }
+            );
+    
+            socketInstance.on('connect', () => {
+                console.log('Connected to socket server');
+                setIsConnected(true);
+    
+                if (uid) {
+                    socketInstance.emit('authenticate', { userId: Number(uid) });
+                }
+            })
+    
+            socketInstance.on('disconnect', () => {
+                console.log('Disconnected from socket server');
+                setIsConnected(false);
+            });
+    
+            socketInstance.on('connect_error', (err) => {
+                console.log('Socket connection error:', err);
+            });
+            
+            setSocket(socketInstance);
+    
+            return () => {
+                socketInstance.disconnect();
+            };
+        } catch(e) {
+          console.log(e);
+        }
     }, [uid]);
 
     useEffect(() => {

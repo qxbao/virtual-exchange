@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSocket } from "@/contexts/SocketContext";
-import { Order } from "@prisma/client";
+import { Order, Prisma, Trade } from "@prisma/client";
 
 export default function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [trades, setTrades] = useState<Trade[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { socket } = useSocket();
 
@@ -14,9 +15,16 @@ export default function useOrders() {
                     if (!res.ok) throw new Error("Failed to fetch orders");
                     return res.json();
                 })
-                .then((data: Order[]) => {
+                .then((data: Prisma.OrderGetPayload<{ include: { trade: true } }>[]) => {
                     setOrders(data);
-                    return true;;
+                    const tempTrades: Trade[] = [];
+                    for (const order of data) {
+                        if (order.trade) {
+                            tempTrades.push(order.trade);
+                        }
+                    }
+                    setTrades(tempTrades);
+                    return true;
                 })
                 .catch(err => {
                     console.error("Error fetching orders:", err);
@@ -50,17 +58,23 @@ export default function useOrders() {
                 );
             };
 
+            const handleTradeCreated = (trade: Trade) => {
+                setTrades((prevTrades) => [trade, ...prevTrades])
+            }
+
             socket.on("order-created", handleOrderCreated);
             socket.on("order-updated", handleOrderUpdated);
             socket.on("order-deleted", handleOrderDeleted);
-
+            socket.on("c", handleTradeCreated);
             return () => {
                 socket.off("order-created", handleOrderCreated);
                 socket.off("order-updated", handleOrderUpdated);
+                socket.off("trade-executed", handleTradeCreated);
                 socket.off("order-deleted", handleOrderDeleted);
             };
         }
     }, [socket]);
 
-    return { orders, isLoading };
+
+    return { orders, isLoading, trades };
 }

@@ -56,7 +56,7 @@ export default function Home() {
 				</Modal.Header>
 				<Modal.Body className="p-5 d-block pt-0">
 					<SignupForm 
-						onCancel={() => setSignupShow(false)}
+						onCancelAction={() => setSignupShow(false)}
 					/>
 				</Modal.Body>
 			</Modal>
@@ -82,7 +82,7 @@ export default function Home() {
 					</div>
 				</Modal.Header>
 				<Modal.Body className="p-5 d-block pt-0">
-					<SigninForm 
+					<SigninForm
 						onCancel={() => setSigninShow(false)}
 					/>
 				</Modal.Body>

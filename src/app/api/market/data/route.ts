@@ -6,6 +6,9 @@ export async function GET(request: NextRequest) {
     if (symbol) {
         try {
             const data = await getMarketData(symbol);
+            if (!data) {
+                return NextResponse.json({ error: "Symbol not found" }, { status: 404 });
+            }
             return NextResponse.json(data, { status: 200 });
         } catch (error) {
             console.error("Error fetching symbol:", error);

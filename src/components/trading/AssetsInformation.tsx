@@ -1,14 +1,54 @@
 import style from "@/app/app/trade/[symbol]/page.module.css";
+import { PopupContext } from "@/contexts/PopupContext";
 import useMarketData from "@/hooks/useMarketData";
 import useOrders from "@/hooks/useOrders";
 import { roundToDecimals } from "@/lib/number";
-import { Position, Prisma } from "@prisma/client";
-import { useState } from "react";
+import { MarketData, Order, Position, Trade } from "@prisma/client";
+import { useContext, useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
 
 export default function AssetsInformation({positions} : {positions: Position[]}) {
     const [tab, setTab] = useState<"open" | "history" | "assets">("open");
-    const { orders, isLoading } = useOrders();
+    const { orders, trades, isLoading } = useOrders();
+    const [marketData, setMarketData] = useState<{[key: string]: MarketData}>({});
+    const [isFetching, setIsFetching] = useState(true);
+    const {showPopup} = useContext(PopupContext)!;
+    useEffect(() => {
+        if (orders.length == 0) return;
+        const symbolSet = new Set(orders.map((order) => order.symbol));
+        const fetchMarketData = async () => {
+            if (!isFetching) return;
+            setIsFetching(true);
+            const marketDataPromises = Array.from(symbolSet).map((symbol) => {
+                if (symbol in Object.keys(marketData)) return true;
+                return fetch("/api/market/data?symbol=" + symbol)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        setMarketData((prev) => ({
+                            ...prev,
+                            [symbol]: data,
+                        }));
+                        return true;
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching market data:", error);
+                        showPopup("Error", "Error fetching market data: " + symbol, true, null);
+                        return false;
+                    });
+            });
+            const bools = await Promise.all(marketDataPromises);
+            if (bools.some(e => e == false)) {
+                setTimeout(() => {
+                    fetchMarketData();
+                }, 1000);
+            } else {
+                console.log(marketData)
+                setIsFetching(false);
+            }
+        }
+        fetchMarketData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orders])
 
     return (
         <div className="d-flex flex-column h-100">
@@ -64,9 +104,10 @@ export default function AssetsInformation({positions} : {positions: Position[]})
                                 </Row>
                                 {
                                     orders.filter((order) => order.status === "OPEN").map((order) => (
-                                        <OrderItem key={order.id} order={order as Prisma.OrderGetPayload<{
-                                            include: { marketData: true }
-                                        }>} />
+                                        !isFetching && <OrderItem
+                                            marketData={marketData[order.symbol]}
+                                            key={"order/" + order.id}
+                                            order={order} />
                                     ))
                                 }</>
                         )
@@ -78,7 +119,7 @@ export default function AssetsInformation({positions} : {positions: Position[]})
                     isLoading ?
                         <span className="mx-auto my-auto">Loading...</span> :
                         (
-                            orders.filter((order) => order.status === "FILLED").length === 0 ? <span className="mx-auto my-auto">No data available</span> : <>
+                            trades.length === 0 ? <span className="mx-auto my-auto">No data available</span> : <>
                                 <Row className="smaller text-secondary mb-2">
                                     <Col lg={2}>
                                         Symbol
@@ -100,10 +141,12 @@ export default function AssetsInformation({positions} : {positions: Position[]})
                                     </Col>
                                 </Row>
                                 {
-                                    orders.filter((order) => order.status === "FILLED").map((order) => (
-                                        <OrderItem key={order.id} order={order as Prisma.OrderGetPayload<{
-                                            include: { marketData: true }
-                                        }>} />
+                                    trades.map((trade) => (
+                                        !isFetching && <TradeItem
+                                            key={"trade/" + trade.id}
+                                            trade={trade}
+                                            marketData={marketData[trade.symbol]}
+                                            />
                                     ))
                                 }</>
                         )
@@ -145,13 +188,11 @@ export default function AssetsInformation({positions} : {positions: Position[]})
     );
 }
 
-function OrderItem({ order }: { order: Prisma.OrderGetPayload<{
-    include: { marketData: true }
-}>}) {
+function OrderItem({ order, marketData }: { order: Order, marketData: MarketData}) {
     return (
         <Row className="small py-1 mb-2 d-flex align-items-center">
             <Col lg={2} className="fw-semibold">
-                <span>{order.marketData.baseAsset + "/" + order.marketData.quoteAsset}</span>
+                <span>{marketData.baseAsset + "/" + marketData.quoteAsset}</span>
             </Col>
             <Col lg={2} className="smaller">
                 <div>{new Date(order.createdAt).toLocaleDateString("en-uk")}</div>
@@ -161,14 +202,39 @@ function OrderItem({ order }: { order: Prisma.OrderGetPayload<{
                 <span className={order.side == "BUY" ? "text-success" : "text-danger"}>{order.side}</span>
             </Col>
             <Col lg={2} className="smaller">
-                <div className={order.type ==  "MARKET" ? "d-block": "d-none"}>{roundToDecimals(order.price!, 5)}</div>
                 <div>{order.type == "MARKET" ? order.type : roundToDecimals(order.stopPrice!, 5)}</div>
             </Col>
             <Col lg={2}>
-                <span>{order.quantity + " " + order.marketData.baseAsset}</span>
+                <span>{order.quantity + " " + marketData.baseAsset}</span>
             </Col>
             <Col lg={2}>
                 <span>{order.status}</span>
+            </Col>
+        </Row>
+    );
+}
+
+function TradeItem({ trade, marketData }: { trade: Trade, marketData: MarketData}) {
+    return (
+        <Row className="small py-1 mb-2 d-flex align-items-center">
+            <Col lg={2} className="fw-semibold">
+                <span>{marketData.baseAsset + "/" + marketData.quoteAsset}</span>
+            </Col>
+            <Col lg={2} className="smaller">
+                <div>{new Date(trade.createdAt).toLocaleDateString("en-uk")}</div>
+                <div>{new Date(trade.createdAt).toLocaleTimeString("en-uk")}</div>
+            </Col>
+            <Col lg={2}>
+                <span className={trade.side == "BUY" ? "text-success" : "text-danger"}>{trade.side}</span>
+            </Col>
+            <Col lg={2} className="smaller">
+                <div>{roundToDecimals(trade.price!, 5)}</div>
+            </Col>
+            <Col lg={2}>
+                <span>{trade.quantity + " " + marketData.baseAsset}</span>
+            </Col>
+            <Col lg={2}>
+                <span>Executed</span>
             </Col>
         </Row>
     );

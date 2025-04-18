@@ -4,7 +4,6 @@ import { Position } from "@prisma/client";
 
 export default function useAssets() {
     const [positions, setPositions] = useState<Position[]>([]);
-    const [totalValue, setTotalValue] = useState(0);
     const [balance, setBalance] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const { socket } = useSocket();
@@ -47,14 +46,6 @@ export default function useAssets() {
         };
 
         fetchPortfolio();
-
-        const positionsValue = positions.reduce(
-            (sum, pos) => sum + pos.currentValue,
-            0
-        );
-        
-        setTotalValue(positionsValue + balance);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
@@ -104,5 +95,5 @@ export default function useAssets() {
         }
     }, [socket, positions, balance]);
 
-    return { positions, totalValue, balance, isLoading };
+    return { positions, balance, isLoading };
 }

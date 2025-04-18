@@ -22,12 +22,11 @@ export async function GET(request: NextRequest) {
 
     const order = await prisma.order.findMany({
         where: filter,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{executedAt: 'desc'}, { createdAt: 'desc' }],
         take: Number(limit),
         skip: Number(offset),
         include: {
-            trades: true,
-            marketData: true,
+            trade: true,
         }
     })
 

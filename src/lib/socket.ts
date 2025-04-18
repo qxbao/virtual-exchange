@@ -41,9 +41,9 @@ export async function emitWithRetry(event: string, data: any, room?: string, max
             },
         });
         return true;
-      } catch (error) {
+      } catch (_error) {
         retries++;
-        console.error(`Emit attempt ${retries} failed:`, error);
+        console.error(`Emit attempt ${retries} failed `);
         
         if (retries >= maxRetries) {
           console.error(`Max retries reached for event ${event}`);
@@ -57,11 +57,11 @@ export async function emitWithRetry(event: string, data: any, room?: string, max
 }
 
 export async function emitToUser(userId: number, event: string, data: any) {
-    return emitEvent(event, data, `user:${userId}`);
+    return emitWithRetry(event, data, `user:${userId}`);
 }
 
 export async function emitMarketUpdate(symbol: string, data: any) {
-    return emitEvent('market-update', {
+    return emitWithRetry('market-update', {
         symbol,
         ...data
     }, `market:${symbol}`);

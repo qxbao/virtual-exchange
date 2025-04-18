@@ -24,7 +24,7 @@ export async function executeOrder(orderId: number) {
         }
         let executionPrice = marketData.price;
 
-        if (order.type === 'LIMIT') executionPrice = order.price!;
+        if (order.type === 'LIMIT' || order.type === "STOP") executionPrice = order.price!;
         const feeRate = 0.001; // 0.1%
         const feeQuantity = order.quantity * feeRate;
         const effectiveQuantity = order.side === OrderSide.BUY 
@@ -48,7 +48,6 @@ export async function executeOrder(orderId: number) {
 
             const newOrderData = {
                 status: OrderStatus.FILLED,
-                filledQuantity: order.quantity,
                 executedAt: new Date(),
             };
 
@@ -106,9 +105,6 @@ export async function executeOrder(orderId: number) {
                         data: {
                             quantity: newQuantity,
                             averageBuyPrice: newAverageBuyPrice,
-                            currentPrice: marketData.price,
-                            currentValue: newQuantity * marketData.price,
-                            unrealizedPnL: (newQuantity * marketData.price) - (newQuantity * newAverageBuyPrice),
                             updatedAt: new Date()
                         }
                     });
@@ -120,9 +116,6 @@ export async function executeOrder(orderId: number) {
                             symbol: order.symbol,
                             quantity: effectiveQuantity,
                             averageBuyPrice: executionPrice,
-                            currentPrice: marketData.price,
-                            currentValue: effectiveQuantity * marketData.price,
-                            unrealizedPnL: 0
                         },
                     });
                 }
@@ -143,10 +136,6 @@ export async function executeOrder(orderId: number) {
                         },
                         data: {
                             quantity: newQuantity,
-                            currentPrice: marketData.price,
-                            currentValue: newQuantity * marketData.price,
-                            unrealizedPnL: newQuantity *
-                                (marketData.price - existingPosition.averageBuyPrice),
                             realizedPnL: {
                                 increment: realizedPnL
                             },

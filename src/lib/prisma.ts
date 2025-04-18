@@ -24,13 +24,17 @@ const socketExtension = Prisma.defineExtension({
             }) {
                 if (transaction) return await query(args);
                 let orderPrevStat = null;
+                const result = await query(args);
                 if (model == "Order" && operation == "update") {
                     const obj = await query({
                         where: args.where,
                     });
                     orderPrevStat = (obj as Order)?.status;
+                    await emitToUser((result as Order).userId, "order-updated", result);
+                    if ((result as Order).status === "FILLED" && orderPrevStat === "OPEN") {
+                        await emitToUser((result as Order).userId, "order-filled", result);
+                    }
                 }
-                const result = await query(args);
                 try {
                     switch (model) {
                         case "Order":
@@ -103,12 +107,6 @@ async function handleOrderChanges(
     switch (operation) {
         case "create":
             await emitToUser(data.userId, "order-created", data);
-            break;
-        case "update":
-            await emitToUser(data.userId, "order-updated", data);
-            if (data.status === "FILLED" && orderPrevStat === "OPEN") {
-                await emitToUser(data.userId, "order-filled", data);
-            }
             break;
         case "delete":
             await emitToUser(data.userId, "order-deleted", data.id);

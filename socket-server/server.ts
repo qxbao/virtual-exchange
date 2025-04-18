@@ -97,5 +97,13 @@ cron.schedule('*/3 * * * * *', async () => {
     },
     body: JSON.stringify({ secret: process.env.SOCKET_SECRET })
   });
+  await fetch(`${process.env.NEXTJS_URL}/api/trading/orders/scan`, {
+    method: 'POST',
+    headers: {
+      "Content-Type": 'application/json',
+    },
+    body: JSON.stringify({ secret: process.env.SOCKET_SECRET })
+  });
+  
   console.log('Market data updated at:', new Date().toISOString());
 });

@@ -110,7 +110,7 @@ export default function OrderBook ({ symbol }: { symbol: string }) {
                         
                         orderBookInitialized = true;
                     } catch (error) {
-                        console.error("Error fetching order book snapshot:", error);
+                        console.log("Error fetching order book snapshot:", error);
                         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retrying
                     }
                 }
@@ -169,18 +169,16 @@ export default function OrderBook ({ symbol }: { symbol: string }) {
                     return newAsks.sort((a, b) => parseFloat(a[0]) - parseFloat(b[0])).slice(0, 10);
                 });
                 
-                // Update the last update ID
                 lastUpdateId = data.u;
             };
 
             ws.addEventListener("open", () => {
                 console.log("Connected to Binance Depth WebSocket");
-                // Reset reconnect attempts on successful connection
                 reconnectAttempts = 0;
             });
 
             ws.addEventListener("error", (error) => {
-                console.error("WebSocket error:", error);
+                console.log("WebSocket error:", error);
                 if (reconnectAttempts < maxReconnectAttempts) {
                     const delay = Math.min(30000, baseReconnectDelay * Math.pow(2, reconnectAttempts));
                     console.log(`Attempting to reconnect in ${delay/1000} seconds...`);
@@ -190,7 +188,7 @@ export default function OrderBook ({ symbol }: { symbol: string }) {
                         connectWebSocket();
                     }, delay);
                 } else {
-                    console.error("Maximum reconnection attempts reached. Please refresh the page.");
+                    console.log("Maximum reconnection attempts reached. Please refresh the page.");
                 }
             });
             
@@ -242,12 +240,12 @@ export default function OrderBook ({ symbol }: { symbol: string }) {
                         connectWebSocket();
                     }, delay);
                 } else {
-                    console.error("Maximum reconnection attempts reached. Please refresh the page.");
+                    console.log("Maximum reconnection attempts reached. Please refresh the page.");
                 }
             });
             
             ws.addEventListener("error", (error) => {
-                console.error("WebSocket error:", error);
+                console.log("WebSocket error:", error);
             });
         };
         
@@ -339,7 +337,7 @@ function OrderBar({ price, amount, total, maxAmount, color }: {
     amount: string, 
     total: number, 
     maxAmount: number,
-    color: string 
+    color: string   
 }) {
     const barRef = useRef<HTMLDivElement>(null);
 

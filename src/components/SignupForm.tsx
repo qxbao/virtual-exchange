@@ -6,10 +6,10 @@ import { signup } from "@/actions/auth";
 import { PopupContext } from "@/contexts/PopupContext";
 
 interface SignupFormProps {
-    onCancel: () => void;
+    onCancelAction: () => void;
 }
 
-export default function SignupForm({ onCancel }: SignupFormProps) {
+export default function SignupForm({ onCancelAction }: SignupFormProps) {
     const [state, formAction, isPending] = useActionState(signup, undefined);
     const [formData, setFormData] = useState({
         username: "",
@@ -24,9 +24,9 @@ export default function SignupForm({ onCancel }: SignupFormProps) {
         if (state?.message !== "User created successfully" && state?.message) {
             showPopup("Error", state?.message, true, null);
         }
-        onCancel();
+        onCancelAction();
         showPopup("Success", state?.message, false, null);
-    }, [onCancel, showPopup, state?.message]);
+    }, [onCancelAction, showPopup, state?.message]);
 
     return (
         <Form action={formAction}>
@@ -83,7 +83,7 @@ export default function SignupForm({ onCancel }: SignupFormProps) {
 
             <Row className="m-0">
                 <Col xs={6} className="ps-0 pe-1">
-                    <button type="button" onClick={onCancel} className="btn btn-outline-secondary w-100 py-2 fw-semibold">Cancel</button>
+                    <button type="button" onClick={onCancelAction} className="btn btn-outline-secondary w-100 py-2 fw-semibold">Cancel</button>
                 </Col>
                 <Col xs={6} className="pe-0 ps-1">
                     <button disabled={isPending} type="submit" className="btn btn-primary w-100 py-2 fw-semibold">Sign up</button>

@@ -1,7 +1,7 @@
 import { createOrder } from "@/actions/trading";
 import style from "@/app/app/trade/[symbol]/page.module.css";
 import { PopupContext } from "@/contexts/PopupContext";
-import { roundToDecimals } from "@/lib/number";
+import { numberFormatRouter, roundToDecimals } from "@/lib/number";
 import { OrderType, Position } from "@prisma/client";
 import { startTransition, useActionState, useContext, useEffect, useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
@@ -120,7 +120,7 @@ export default function TradeCard(
                             onChange={(e) => {
                                 if (!isNaN(Number(e.target.value))) {
                                     setAmount(e.target.value);
-                                    setTotal(e.target.value == "" ? "" : (Number(e.target.value) * assetPrice).toString())
+                                    setTotal(e.target.value == "" ? "" : (Number(e.target.value) * Number(price)).toString())
                                 }
                             }}
                             isInvalid={Boolean(formState?.error?.quantity)}
@@ -137,21 +137,21 @@ export default function TradeCard(
                             onChange={(e) => {
                                 if (!isNaN(Number(e.target.value))) {
                                     setTotal(e.target.value)
-                                    setAmount(e.target.value == "" ? "" : (Number(e.target.value) / assetPrice).toString())
+                                    setAmount(e.target.value == "" ? "" : (Number(e.target.value) / Number(price)).toString())
                                 }
                             }}/>
                     </div>
                     <div className="smaller text-secondary mb-4">
                         <div className="mb-1">
-                            Available: { isLoading ? "..." :(
+                            Available: { isLoading ? "..." : (
                                 orderSide == "Buy" ? balance : (positions.find((p) => p.symbol === symbol)?.quantity ?? 0)
-                            )} { orderSide == "Buy" ? asset.quoteAsset : asset.baseAsset }
+                            ).toLocaleString("en-us", {maximumFractionDigits: 6})} { orderSide == "Buy" ? asset.quoteAsset : asset.baseAsset }
                         </div>
                         <div>
                             Max {orderSide.toLowerCase()}: { isLoading ? "..." : 
                                 (
-                                    orderSide == "Buy" ? ((balance/assetPrice) * 0.999).toLocaleString("en-us", {maximumFractionDigits: 6}) : ((positions.find((p) => p.symbol === symbol)?.quantity ?? 0) * assetPrice)
-                                )
+                                    orderSide == "Buy" ? ((balance/assetPrice) * 0.999) : ((positions.find((p) => p.symbol === symbol)?.quantity ?? 0) * assetPrice)
+                                ).toLocaleString("en-us", {maximumFractionDigits: 6})
                             } {orderSide == "Buy" ? asset.baseAsset : asset.quoteAsset}
                         </div>
                     </div>

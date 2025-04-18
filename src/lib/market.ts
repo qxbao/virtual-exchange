@@ -41,17 +41,8 @@ interface Binance24HFullResponse {
 export async function getMarketData(symbol: string): Promise<MarketData | null> {
     const cachedData = await prisma.marketData.findUnique({
         where: { symbol },
-    });
-
-    
-    if (
-        cachedData &&
-        Date.now() - cachedData.updatedAt.getTime() < 10 * 1000
-    ) {
-        return cachedData;
-    } else {
-        return null
-    }
+    });    
+    return cachedData;
 }
 
 export async function updateMarketData(assets: string[] = DefaultBaseAssets) {

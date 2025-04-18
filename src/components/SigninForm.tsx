@@ -6,7 +6,7 @@ import { PopupContext } from "@/contexts/PopupContext";
 
 interface SigninFormProps {
     onCancel: () => void;
-}
+}       
 
 export default function SigninForm({ onCancel }: SigninFormProps) {
     const [formData, setFormData] = useState<SigninFormData>({
