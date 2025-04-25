@@ -76,7 +76,7 @@ export default function TradeCard(
                 <div className="py-2">
                     <div className="smaller text-secondary pb-1 mb-3 d-flex border-2 border-dark border-bottom">
                         {
-                            Object.values(OrderType).map((e) => {
+                            ["MARKET", "LIMIT"].map((e) => {
                                 return (
                                     <div
                                         key={e}
