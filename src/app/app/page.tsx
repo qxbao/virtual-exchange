@@ -28,19 +28,20 @@ export default function AuthenticatedHome() {
                 <p>Click on any crypto to start trading</p>
             </div>
             <Row className="text-secondary small fw-bold px-lg-2">
-                <div className="col-4">
+                <div className="col-3">
                     <div>Name</div>
                 </div>
-                <div className="col-2">
-                    <div className="text-end">Price</div>
+                <div className="col ms-auto">
+                    <div className="text-end d-lg-none">Price/ 24h Change/ 24h Vol/ Market Cap</div>
+                    <div className="text-end d-none d-lg-block">Price</div>
                 </div>
-                <div className="col-2">
+                <div className="col-2 d-none d-lg-block">
                     <div className="text-end">24h Change</div>
                 </div>
-                <div className="col-2">
+                <div className="col-2 d-none d-lg-block">
                     <div className="text-end">24h Volume</div>
                 </div>
-                <div className="col-2">
+                <div className="col-2 d-none d-lg-block">
                     <div className="text-end">Market Cap</div>
                 </div>
             </Row>
@@ -62,7 +63,7 @@ const CoinDisplayCard = ({ data }: { data: MarketData }) => {
     return (
         <Link href="/app/trade/[symbol]" as={`/app/trade/${data.symbol}`}>
             <Row className={"py-4 px-lg-2 " + style.coinCard} role="button">
-                <Col lg={4}>
+                <Col lg={4} xs={5}>
                     <div className="d-flex align-items-center">
                         {imageUrl && <Image
                             src={imageUrl!}
@@ -78,12 +79,32 @@ const CoinDisplayCard = ({ data }: { data: MarketData }) => {
                         <span className="smaller text-secondary">{name}</span>
                     </div>
                 </Col>
-                <Col lg={2}>
+                <Col className="d-lg-block d-lg-none">
+                    <div className="text-end fw-light">
+                        {!isLoading && price!.toLocaleString("en-us", { maximumFractionDigits: 8 })}
+                    </div>
+                    <div className="text-end fw-bold">
+                        {
+                            !isLoading && (
+                                <span className={changePercent > 0 ? "text-success" : "text-danger"}>
+                                    {(changePercent > 0 ? "+" : "") + changePercent.toFixed(2)}%
+                                </span>
+                            )
+                        }
+                    </div>
+                    <div className="text-end fw-light">
+                        ${bigNumberFormat(volume)}
+                    </div>
+                    <div className="text-end fw-light">
+                        ${bigNumberFormat(marketCap)}
+                    </div>
+                </Col>
+                <Col lg={2} className="d-none d-lg-block">
                     <div className="text-end fw-light">
                         {!isLoading && price!.toLocaleString("en-us", { maximumFractionDigits: 8 })}
                     </div>
                 </Col>
-                <Col lg={2}>
+                <Col lg={2} className="d-none d-lg-block">
                     <div className="text-end fw-bold">
                         {
                             !isLoading && (
@@ -94,12 +115,12 @@ const CoinDisplayCard = ({ data }: { data: MarketData }) => {
                         }
                     </div>
                 </Col>
-                <Col lg={2}>
+                <Col lg={2} className="d-none d-lg-block">
                     <div className="text-end fw-light">
                         ${bigNumberFormat(volume)}
                     </div>
                 </Col>
-                <Col lg={2}>
+                <Col lg={2} className="d-none d-lg-block">
                     <div className="text-end fw-light">
                         ${bigNumberFormat(marketCap)}
                     </div>

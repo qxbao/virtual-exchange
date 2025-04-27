@@ -65,7 +65,7 @@ export default function useOrders() {
             socket.on("order-created", handleOrderCreated);
             socket.on("order-updated", handleOrderUpdated);
             socket.on("order-deleted", handleOrderDeleted);
-            socket.on("c", handleTradeCreated);
+            socket.on("trade-executed", handleTradeCreated);
             return () => {
                 socket.off("order-created", handleOrderCreated);
                 socket.off("order-updated", handleOrderUpdated);

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const order = await prisma.order.findMany({
         where: filter,
-        orderBy: [{executedAt: 'desc'}, { createdAt: 'desc' }],
+        orderBy: [{ createdAt: 'desc' }, {executedAt: 'desc'}],
         take: Number(limit),
         skip: Number(offset),
         include: {

@@ -5,6 +5,7 @@ import { FaCircleUser, FaRegUser } from "react-icons/fa6";
 import { useState } from "react";
 import style from '@/assets/styles/navbar.module.css'
 import { MdOutlinePowerSettingsNew } from "react-icons/md";
+import useAssets from "@/hooks/useAssets";
 
 const navItems: Record<string, string> = {
 	"Markets": "/app",
@@ -13,6 +14,8 @@ const navItems: Record<string, string> = {
 
 export default function NavigationBar({ userId, username }: { userId: number, username: string }) {
 	const [userDropdown, setUserDropdown] = useState(false);
+	const { balance } = useAssets();
+	const [hideBalance, setHideBalance] = useState(false);
 	return (
 		<Navbar expand="lg" className="bg-transparent" variant="dark">
 			<Container fluid className="px-4 py-2 text-light">
@@ -33,8 +36,12 @@ export default function NavigationBar({ userId, username }: { userId: number, us
 									<div className="small text-secondary">UID: {userId}</div>
 								</div>
 							</div>
-							<button className="w-100 py-1 border-1 border-secondary border bg-transparent rounded-pill smaller text-black">
-								Go to profile
+							<button className="w-100 py-1 border-2 border-secondary border bg-transparent rounded-pill smaller text-dark"
+								onClick={() => {
+									setHideBalance(!hideBalance);
+								}}
+								>
+								{ hideBalance ? balance.toLocaleString("en-US", { style: "currency", currency: "USD" }) : balance }
 							</button>
 							<hr className="opacity-50 mt-4 text-secondary mb-2"/>
 							<Link href="/user/logout" className="small d-flex align-items-center py-2">

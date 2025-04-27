@@ -103,6 +103,7 @@ export default function TradeCard(
                             onChange={(e) => {
                                 if (!isNaN(Number(e.target.value))) {
                                     setPrice(e.target.value)
+                                    setTotal(e.target.value == "" ? "" : (Number(e.target.value) * Number(amount)).toString())
                                 }
                             }}
                             isInvalid={Boolean(formState?.error?.stopPrice)}
