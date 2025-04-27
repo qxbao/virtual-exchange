@@ -119,7 +119,6 @@ async function handlePositionChanges(operation: string, data: Position) {
 
     switch (operation) {
         case "create":
-            /* Todo: {Emit position-create event to the user} */
             await emitToUser(data.userId, "position-create", data);
             break;
         case "update":
