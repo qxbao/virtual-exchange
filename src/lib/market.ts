@@ -2,16 +2,16 @@ import { MarketData } from "@prisma/client";
 import prisma from "./prisma";
 
 const DefaultBaseAssets = [
-    "BTC",
-    "ETH",
-    "DOGE",
-    "BNB",
-    "TRUMP",
-    "SOL",
-    "XRP",
-    "PEPE",
-    "SUI",
-    "NIL",
+    "BTCUSDT",
+    "ETHUSDT",
+    "DOGEUSDT",
+    "BNBUSDT",
+    "TRUMPUSDT",
+    "SOLUSDT",
+    "XRPUSDT",
+    "PEPEUSDT",
+    "SUIUSDT",
+    "NILUSDT",
 ];
 
 interface Binance24HFullResponse {

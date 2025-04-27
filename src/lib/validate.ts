@@ -37,12 +37,12 @@ export function validateSignupFormData(formData : SignupFormData) {
 
 export function validateSigninFormData(formData: SigninFormData): SigninFormData {
     const errors = {
-        email: "",
+        username: "",
         password: ""
     };
     
-    if (!formData.email.trim()) {
-        errors.email = "This field is required";
+    if (!formData.username.trim()) {
+        errors.username = "This field is required";
     }
     
     if (!formData.password) {

@@ -46,7 +46,7 @@ export async function createOrder(state: OrderState, formData: FormData) {
         });
         const estimatedCost = validation!.data.type === 'MARKET' 
               ? marketData!.price * validation!.data.quantity 
-              : (price || validation!.data.stopPrice)! * validation!.data.quantity;
+              : (validation!.data.stopPrice || price)! * validation!.data.quantity;
         if (!user || user.balance < estimatedCost) {
             return {
                 message: 'Insufficient balance',
