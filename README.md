@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VirtualX - Virtual Cryptocurrency Exchange
 
-## Getting Started
+A risk-free cryptocurrency mock trading platform that provides users with a realistic trading experience without financial risk. Start with 3,000 USDT and receive 100 USDT daily to practice trading strategies.
 
-First, run the development server:
+## Table of Contents
+
+- [Features](#features)
+- [Technologies](#technologies)
+- [Guide](#guide)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Environment Variables](#environment-variables)
+
+
+## Features
+
+- **Real-time Market Data**: Live price updates from Binance API
+- **Order Book Visualization**: Real-time order book with bid/ask information
+- **Advanced Charts**: Interactive candlestick charts with multiple timeframes
+- **Trading Functionality**: Market, limit and stop orders
+- **Portfolio Management**: Track positions, orders, and trading history
+- **User Authentication**: Secure signup/login system
+- **Real-time Updates**: Powered by Socket.io for instant updates
+
+## Technologies
+
+- **Frontend**: React 19, Next.js 15, Bootstrap 5
+- **Backend**: Next.js API Routes, Express (Socket Server)
+- **Database**: MySQL with Prisma ORM
+- **Authentication**: JWT with jose
+- **Real-time Communication**: Socket.io
+- **Others**: TypeScript, Zod validation, bcrypt
+
+## Guide
+
+### Prerequisites
+
+- Node.js (v18+)
+- MySQL database
+- Git
+
+### Installation
+
+1. Clone the repository:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/qxbao/virtual-exchange.git
+cd virtual_exchange
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Set up the database:
+```
+npm run database
+```
 
-## Learn More
+4. Start the development server:
+```
+# In one terminal, start the Next.js app
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# In another terminal, start the Socket.io server
+npm run socket
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Environment Variables
+Create a `.env` file in the root directory with the following variables:
+```
+# Database
+DATABASE_URL="mysql://username:password@localhost:3306/<database-name>"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Authentication
+SESSION_SECRET="<your-jwt-secret-key>"
 
-## Deploy on Vercel
+# Socket Server
+SOCKET_SERVER_URL="http://localhost:4000"
+SOCKET_PORT="4000"
+SOCKET_SECRET="<another-secret-key-to-communicate-between-socket-and-nextjs-server>"
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Next.js
+NEXTJS_URL="http://localhost:3000"
+```
