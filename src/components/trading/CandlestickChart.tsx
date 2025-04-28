@@ -22,7 +22,7 @@ export default function CandleStickChart({ symbol }: { symbol: string }) {
     const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
     const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
-        const fetchDataFromBinance = () => {
+    const fetchDataFromBinance = () => {
             fetch(`https://api.binance.com/api/v3/klines?${new URLSearchParams({ symbol, interval: interv })}`)
                 .then(res => res.json())
                 .then((data) => {
@@ -42,7 +42,7 @@ export default function CandleStickChart({ symbol }: { symbol: string }) {
                     }
                 })
                 .catch((error) => {
-                    console.error("Error fetching market data:", error);
+                    console.log("Error fetching market data:", error);
                 });
         };
 
