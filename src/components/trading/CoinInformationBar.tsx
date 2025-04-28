@@ -25,7 +25,7 @@ export default function CoinInformationBar() {
             </div>
             <div>
                 <div className={`small fw-bold ${changePercent >= 0 ? "text-success" : "text-danger"}`}>
-                    {isLoading ? "..." : price.toLocaleString("en-us", { minimumFractionDigits: 2 })}
+                    {isLoading ? "..." : (price || 0).toLocaleString("en-us", { minimumFractionDigits: 2 })}
                 </div>  
                 <div className={`smaller fw-bold ${changePercent >= 0 ? "text-success" : "text-danger"}`}>
                     {isLoading ? "..." : ((changePercent > 0 ? "+" : "") + changePercent.toFixed(2) + "%")}
