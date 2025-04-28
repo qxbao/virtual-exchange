@@ -4,7 +4,7 @@ import { MarketData } from "@prisma/client";
 import { useState, useEffect } from "react";
 
 export default function useMarketData(symbol: string) {
-    const [price, setPrice] = useState<number | null>(null);
+    const [price, setPrice] = useState<number>(-1);
     const [change, setChange] = useState<number>(0);
     const [changePercent, setChangePercent] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -13,7 +13,7 @@ export default function useMarketData(symbol: string) {
     const [volume, setVolume] = useState<number>(0);
     const [high, setHigh] = useState<number>(0);
     const [low, setLow] = useState<number>(0)
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [imageUrl, setImageUrl] = useState<string>("");
     const [asset, setAsset] = useState({
         baseAsset: "XXX",
         quoteAsset: "YYY",
